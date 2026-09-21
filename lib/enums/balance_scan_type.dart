@@ -1,0 +1,4 @@
+enum BalanceScanType {
+  scanRc,
+  scanBox,
+}

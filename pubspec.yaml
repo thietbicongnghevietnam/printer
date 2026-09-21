@@ -1,0 +1,155 @@
+name: smart_warehouse
+description: A new Flutter project.
+publish_to: 'none'
+version: 2025.04.25+1
+environment:
+  sdk: '>=3.1.4 <4.0.0'
+
+dependencies:
+  flutter: 
+    sdk: flutter
+  # Network
+  retrofit: ^4.0.3
+  dio: ^5.3.3
+
+  # Navigation
+  auto_route: ^8.0.3
+
+  # Multi language
+  easy_localization: ^3.0.5
+  easy_logger: ^0.0.2
+
+  # State management
+  flutter_bloc: ^8.1.3
+
+  # Local Storage
+  shared_preferences: ^2.2.2
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
+  # Model
+  freezed: ^2.4.1
+  freezed_annotation: ^2.4.1
+  json_annotation: ^4.8.1
+
+  # Resource
+  flutter_svg: ^2.0.9
+  cupertino_icons: ^1.0.2
+
+  # Logger
+  logger: ^2.0.2+1
+
+  # Dependence Injection
+  injectable: ^2.3.2
+  get_it: ^7.6.4
+
+  # PDA
+  flutter_datawedge: ^2.1.0
+
+  # Application Info
+  package_info_plus: ^7.0.0
+
+  # Collection
+  collection: ^1.17.2
+
+  # Notify
+  cool_alert: ^2.0.1
+  fluttertoast: ^8.2.4
+
+  # Camera
+  camera: ^0.10.5+5
+
+  # Recognition Text
+  google_mlkit_text_recognition: ^0.11.0
+
+  # UI
+  pluto_grid: ^8.0.0
+  flutter_widget_from_html: ^0.14.7
+  dropdown_button2: ^2.3.9
+  dotted_border: ^2.1.0
+  infinite_scroll_pagination: ^4.0.0
+
+  # Print
+  sprintf: ^7.0.0
+  tuple: ^2.0.2
+  flutter_bluetooth_serial: ^0.4.0
+  # Utils
+  intl: ^0.19.0
+
+  # Directory
+  path_provider: ^2.1.2
+  open_file: ^3.3.2
+  permission_handler: ^11.3.1
+
+  # Slidable
+  flutter_slidable: ^3.1.0
+
+  # Date Picker
+  flutter_datetime_picker_plus: ^2.1.0
+
+  # Cache Image
+  cached_network_image: ^3.3.1
+
+  # Open Url
+  url_launcher: ^6.2.6
+
+  faker: ^2.1.0
+
+  #EMap Painting
+  path_drawing: ^1.0.1
+  glowy_borders: ^1.0.2
+  flutter_dash_border_animated: ^0.0.4
+
+  # FontSize Scale
+  flutter_screenutil: ^5.9.3
+
+  # Unique string
+  uuid: ^4.4.0
+
+  # Stepper widgets
+  easy_stepper: ^0.8.3
+  qr_flutter: ^4.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^3.0.0
+
+  # Generator code
+  build_runner: ^2.4.6
+  flutter_gen_runner: ^5.3.2
+  auto_route_generator: ^8.0.0
+  injectable_generator: ^2.6.1
+  retrofit_generator: ^8.0.2
+  json_serializable: ^6.7.1
+
+  # Icon launcher
+  flutter_launcher_icons: ^0.13.1
+
+  # Unit test
+  mocktail: ^1.0.1
+
+dependency_overrides:
+  intl: any
+
+flutter_gen:
+  integrations:
+    flutter_svg: true
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  image_path: "assets/images/icon.jpg"
+  adaptive_icon_background: "#ffe082"
+  adaptive_icon_foreground: "assets/images/icon.jpg"
+  adaptive_icon_padding: false
+  min_sdk_android: 21
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/icons/
+    - assets/images/
+    - assets/translations/
+    - assets/html/

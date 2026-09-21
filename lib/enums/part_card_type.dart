@@ -1,0 +1,1 @@
+enum PartCardType { Local, OverSea }

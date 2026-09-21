@@ -1,0 +1,4 @@
+enum OutStorageType {
+  oneByOne,
+  all,
+}

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f9f9f9;
+    }
+
+    .label {
+      width: 600px;
+      border: 2px solid black;
+      padding: 10px;
+      background-color: white;
+      box-sizing: border-box;
+    }
+
+    .layout1 {
+      display: flex;
+      margin-bottom: 10px;
+
+      .item1 {
+        flex: 1;
+      }
+
+      .item2 {
+        flex: 1;
+      }
+
+      .item3 {
+        flex: 2;
+        text-align: right;
+        padding-right: 10px;
+      }
+    }
+
+    .layout2 {
+      width: 100%;
+      border: 2px solid black;
+      background-color: white;
+      box-sizing: border-box;
+
+      .row1 {
+        display: flex;
+        border-bottom: 2px solid black;
+
+        .item1 {
+          height: 70px;
+          align-content: center;
+          flex: 4;
+          border-right: 2px solid black;
+
+          .item1Text {
+            padding-left: 10px;
+            font-weight: bold;
+          }
+        }
+
+        .item2 {
+          flex: 2;
+          display: flex;
+          flex-direction: column;
+          box-sizing: border-box;
+
+          .child {
+            flex: 1;
+            align-content: center;
+          }
+
+          .child:first-child {
+            border-bottom: 2px solid black;
+            /* Define the border style, width, and color */
+          }
+        }
+      }
+
+      .row2 {
+        display: flex;
+        border-bottom: 2px solid black;
+
+        .item1 {
+          height: 70px;
+          flex: 4;
+          display: flex;
+          box-sizing: border-box;
+          border-right: 2px solid black;
+
+          .child {
+            flex: 1;
+            border-right: 2px solid black;
+            padding-left: 10px;
+            align-content: center;
+          }
+
+          .child3 {
+            border-right: 0px solid black;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            padding: 5px
+          }
+
+          .child2 {
+            font-weight: bold;
+            padding-left: 10px;
+          }
+        }
+
+        .item2 {
+          flex: 2;
+          display: flex;
+          flex-direction: column;
+          box-sizing: border-box;
+
+          .child {
+            flex: 1;
+            align-content: center;
+          }
+
+          .child:first-child {
+            border-bottom: 2px solid black;
+          }
+        }
+      }
+
+      .row3 {
+        display: flex;
+        width: 100%;
+        box-sizing: border-box;
+        height: 150px;
+
+        .item1 {
+          flex: 4;
+          border-right: 2px solid black;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+
+          .footerStyle1 {
+            flex: 1;
+            display: flex;
+            border-bottom: 2px solid black;
+
+            .column1 {
+              flex: 1;
+              border-right: 2px solid black;
+            }
+
+            .column2 {
+              flex: 2;
+            }
+          }
+
+          .footerStyle2 {
+            flex: 1;
+            display: flex;
+
+            .column1 {
+              flex: 1;
+              border-right: 2px solid black;
+            }
+
+            .column2 {
+              flex: 1;
+            }
+          }
+        }
+
+        .item2 {
+          flex: 2;
+          height: 100%;
+          align-content: center;
+          text-align: center;
+
+          .image {
+            width: 100px;
+            height: 100px;
+          }
+        }
+      }
+    }
+
+    .label-title {
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+<div class="layout1">
+</div>
+<table class="table">
+    <tr class="header-row">
+        <td><div id = "kittingFrom"></div> </td>
+        <td colspan="2"><span id = "category"></span></td>
+        <td><span id = "date-outside"></span></td>
+    </tr>
+    <tr>
+        <td colspan="3"><div id ="material">XZB25X35A04</div></td>
+        <td><span id = "uln"></span><br> <span id="repSloc"></span></td>
+    </tr>
+    <tr>
+        <td><div>Pos</div></td>
+        <td><div id ='pos-mcs'></div></td>
+        <td><div>PIC <br> <div id = "pic"></div></div></td>
+        <td><span id = "isl"></span></td>
+    </tr>
+    <tr>
+        <td><div>Reason</div></td>
+        <td colspan="2"><div id ="reason"></div></td>
+        <td rowspan="3"><div id = "qr-code"></div></td>
+    </tr>
+    <tr>
+        <td><div>Remark</div></td>
+        <td colspan="2"><div id ='remark'></div></td>
+    </tr>
+    <tr>
+        <td><span id ='lineOutside'></span></td>
+        <td colspan="2"><span id="qtyOutside"></span></td>
+    </tr>
+</table>
+</body>
+
+</html>
