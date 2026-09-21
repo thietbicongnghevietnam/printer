@@ -112,6 +112,8 @@ smart-warehouse/
 •	views/: Chứa tất cả các thành phần giao diện người dùng (UI), bao gồm các trang, hộp thoại, và widget.
 •	subsystems/: Có thể là các module hoặc hệ thống con, mỗi module này có thể là một tính năng độc lập hoặc chức năng bổ sung.
 
+### 09.2026 gop IQC
+
 ## Cài đặt
 
 ### Yêu cầu hệ thống
