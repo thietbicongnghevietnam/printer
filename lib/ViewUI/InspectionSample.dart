@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../ControllerAPI/api_IQC.dart';
 import '../ModelUI/class_api_IQC.dart';
 import '../di/di.dart';
+import '../l10n/app_lang.dart';
 import '../repositories/auth_repository.dart';
 import '../views/pages/iqc/iqc_menu_page.dart';
 
@@ -114,18 +114,28 @@ class _ExampleWidgetState extends State<CheckInspection> {
   void checkRadio2(String value) => setState(() => group_OK_NG2 = value);
 
   Future<void> autogetuser() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final id = await getIt<AuthRepository>().getUserID();
+    print(id);
+
     if (!mounted) return;
-    setState(() async {
-      //userId = prefs.getString('username') ?? '';
-      userId = await getIt<AuthRepository>().getUserID();
-      print(userId);
+    setState(() {
+      userId = id;
     });
+  }
+
+  // ==================== NGON NGU ====================
+
+  /// Khi doi ngon ngu => build lai man hinh.
+  void _onLangChanged() {
+    if (!mounted) return;
+    setState(() {});
   }
 
   @override
   void initState() {
     super.initState();
+    LangController.current.addListener(_onLangChanged);
+    LangController.load(); // doc ngon ngu da luu lan truoc
     autogetuser();
     droprecheck = "";
     hideKeyboard();
@@ -135,6 +145,8 @@ class _ExampleWidgetState extends State<CheckInspection> {
   void _updateColor() {
     if (!mounted) return;
     setState(() {
+      // Luu y: "checked"/"finished" la gia tri du lieu tu server,
+      // KHONG dich cac gia tri nay.
       if (txtstatus.text == "checked") {
         _boxColor = Colors.greenAccent;
       } else if (txtstatus.text == "finished") {
@@ -152,6 +164,7 @@ class _ExampleWidgetState extends State<CheckInspection> {
 
   @override
   void dispose() {
+    LangController.current.removeListener(_onLangChanged);
     txtstatus.removeListener(_updateColor);
 
     for (final c in [
@@ -181,6 +194,31 @@ class _ExampleWidgetState extends State<CheckInspection> {
   }
 
   // ==================== UI WIDGETS ====================
+
+  /// Nut chon ngon ngu tren AppBar.
+  Widget _languageButton() {
+    return PopupMenuButton<AppLang>(
+      tooltip: tr('language'),
+      initialValue: LangController.current.value,
+      onSelected: (lang) => LangController.set(lang),
+      itemBuilder: (_) => const [
+        PopupMenuItem(value: AppLang.vi, child: Text('🇻🇳  Tiếng Việt')),
+        PopupMenuItem(value: AppLang.en, child: Text('🇬🇧  English')),
+      ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.language),
+            const SizedBox(width: 4),
+            Text(LangController.isVi ? 'VI' : 'EN',
+                style: const TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _field({
     required TextEditingController controller,
@@ -284,7 +322,8 @@ class _ExampleWidgetState extends State<CheckInspection> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Inspection IQC'),
+        title: Text(tr('iqcTitle')),
+        actions: [_languageButton()],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -296,8 +335,9 @@ class _ExampleWidgetState extends State<CheckInspection> {
               Wrap(
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  _radioOption("Sample", typecheck, "Check Sample", checkRadio),
-                  _radioOption("Rohs", typecheck, "Check Rohs", checkRadio),
+                  _radioOption(
+                      "Sample", typecheck, tr('checkSample'), checkRadio),
+                  _radioOption("Rohs", typecheck, tr('checkRohs'), checkRadio),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -312,9 +352,9 @@ class _ExampleWidgetState extends State<CheckInspection> {
                           setState(() => isboxng = value ?? false);
                         },
                       ),
-                      const Text(
-                        'scan boxes',
-                        style: TextStyle(
+                      Text(
+                        tr('scanBoxes'),
+                        style: const TextStyle(
                             fontSize: 12,
                             color: Colors.blue,
                             fontWeight: FontWeight.bold),
@@ -333,11 +373,11 @@ class _ExampleWidgetState extends State<CheckInspection> {
                     child: _field(
                       controller: txtScan,
                       focusNode: scanid,
-                      label: 'Scan RecevingCard',
+                      label: tr('scanReceivingCard'),
                       autofocus: true,
                       onSubmitted: (value) {
                         if (typecheck == "") {
-                          thongbaoNG("Bạn chưa chọn kiểu loại hình kiểm tra");
+                          thongbaoNG(tr('msgNoCheckType'));
                           txtScan.text = "";
                           safeRequestFocus(scanid);
                         } else {
@@ -351,7 +391,7 @@ class _ExampleWidgetState extends State<CheckInspection> {
                     child: _field(
                       controller: txtbox,
                       focusNode: boxid,
-                      label: 'Scan box',
+                      label: tr('scanBox'),
                       onSubmitted: _onBoxSubmitted,
                     ),
                   ),
@@ -363,8 +403,10 @@ class _ExampleWidgetState extends State<CheckInspection> {
               // --- Invoice / Date / LotQty ---
               Row(
                 children: [
-                  Expanded(flex: 4, child: _infoCard(lblinvoice, 'Invoice')),
-                  Expanded(flex: 3, child: _infoCard(lblincomingdate, 'Date')),
+                  Expanded(
+                      flex: 4, child: _infoCard(lblinvoice, tr('invoice'))),
+                  Expanded(
+                      flex: 3, child: _infoCard(lblincomingdate, tr('date'))),
                   Expanded(flex: 2, child: _infoCard(LotQty, '0')),
                 ],
               ),
@@ -374,13 +416,13 @@ class _ExampleWidgetState extends State<CheckInspection> {
               // --- Position / CtrlKey / CtrlT / Qty ---
               Row(
                 children: [
-                  Expanded(child: _infoCard(vitri, 'Position')),
+                  Expanded(child: _infoCard(vitri, tr('position'))),
                   const SizedBox(width: 4),
                   Expanded(
                     child: _field(
                       controller: txtctrlkey,
                       focusNode: ctrlkeyid,
-                      label: 'CtrlKey',
+                      label: tr('ctrlKey'),
                       readOnly: true,
                     ),
                   ),
@@ -389,7 +431,7 @@ class _ExampleWidgetState extends State<CheckInspection> {
                     child: _field(
                       controller: txtctrlT,
                       focusNode: ctrlTid,
-                      label: 'CtrlT',
+                      label: tr('ctrlT'),
                       readOnly: true,
                     ),
                   ),
@@ -398,7 +440,7 @@ class _ExampleWidgetState extends State<CheckInspection> {
                     child: _field(
                       controller: txtqtybox,
                       focusNode: qtyboxid,
-                      label: 'Qty',
+                      label: tr('qty'),
                       hint: '0',
                       readOnly: true,
                     ),
@@ -416,7 +458,7 @@ class _ExampleWidgetState extends State<CheckInspection> {
                     child: _field(
                       controller: txtcodedate,
                       focusNode: codateid,
-                      label: 'Code date',
+                      label: tr('codeDate'),
                       onSubmitted: codateid_function,
                     ),
                   ),
@@ -425,7 +467,7 @@ class _ExampleWidgetState extends State<CheckInspection> {
                     child: _field(
                       controller: txtrecheck,
                       focusNode: recheckid,
-                      label: 'QtyInput',
+                      label: tr('qtyInput'),
                       hint: '0',
                       keyboardType: TextInputType.number,
                       onSubmitted: recheckid_function,
@@ -444,7 +486,7 @@ class _ExampleWidgetState extends State<CheckInspection> {
                     child: _field(
                       controller: txtremark,
                       focusNode: remarkid,
-                      label: 'Remark',
+                      label: tr('remark'),
                       onSubmitted: remarkid_function,
                     ),
                   ),
@@ -453,7 +495,7 @@ class _ExampleWidgetState extends State<CheckInspection> {
                     child: _field(
                       controller: txtSLNG,
                       focusNode: slngid,
-                      label: 'QtyNG',
+                      label: tr('qtyNG'),
                       hint: '0',
                       keyboardType: TextInputType.number,
                       onSubmitted: (value) {
@@ -475,7 +517,7 @@ class _ExampleWidgetState extends State<CheckInspection> {
                     child: _field(
                       controller: txtsoluonghuy,
                       focusNode: soluonghuyid,
-                      label: 'Q.Scrap',
+                      label: tr('qtyScrap'),
                       hint: '0',
                       keyboardType: TextInputType.number,
                     ),
@@ -485,7 +527,7 @@ class _ExampleWidgetState extends State<CheckInspection> {
                     child: _field(
                       controller: txtusersubmit,
                       focusNode: usersubmitid,
-                      label: 'UserID',
+                      label: tr('userId'),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -493,7 +535,7 @@ class _ExampleWidgetState extends State<CheckInspection> {
                     child: _field(
                       controller: txtstatus,
                       focusNode: statusid,
-                      label: 'Status',
+                      label: tr('status'),
                       readOnly: true,
                       fillColor: _boxColor,
                     ),
@@ -507,8 +549,10 @@ class _ExampleWidgetState extends State<CheckInspection> {
               Wrap(
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  _radioOption("OK", group_OK_NG2, "Judment OK", checkRadio2),
-                  _radioOption("NG", group_OK_NG2, "Judment NG", checkRadio2),
+                  _radioOption(
+                      "OK", group_OK_NG2, tr('judgmentOK'), checkRadio2),
+                  _radioOption(
+                      "NG", group_OK_NG2, tr('judgmentNG'), checkRadio2),
                 ],
               ),
 
@@ -517,14 +561,16 @@ class _ExampleWidgetState extends State<CheckInspection> {
               // --- Buttons: nut nho, 4 nut tren 1 hang ---
               Row(
                 children: [
-                  Expanded(child: _smallButton('Submit', _onSubmitPressed)),
+                  Expanded(
+                      child: _smallButton(tr('submit'), _onSubmitPressed)),
                   const SizedBox(width: 4),
-                  Expanded(child: _smallButton('Reset', reset)),
-                  const SizedBox(width: 4),
-                  Expanded(child: _smallButton('Del', _onDeletePressed)),
+                  Expanded(child: _smallButton(tr('reset'), reset)),
                   const SizedBox(width: 4),
                   Expanded(
-                    child: _smallButton('Exit', () {
+                      child: _smallButton(tr('delete'), _onDeletePressed)),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: _smallButton(tr('exit'), () {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
@@ -564,7 +610,7 @@ class _ExampleWidgetState extends State<CheckInspection> {
 
         final row = _firstRow(dtupdatebox);
         if (row == null) {
-          _boxError("Kiểm tra lại thông tin box card 3!");
+          _boxError(tr('msgCheckBoxCard', {'n': '3'}));
           return;
         }
 
@@ -584,7 +630,7 @@ class _ExampleWidgetState extends State<CheckInspection> {
           }
           hideKeyboard();
         } else {
-          _boxError("Kiểm tra lại thông tin box card 4!");
+          _boxError(tr('msgCheckBoxCard', {'n': '4'}));
         }
       } else {
         // truong hop normal
@@ -594,7 +640,7 @@ class _ExampleWidgetState extends State<CheckInspection> {
 
         final row = _firstRow(dtcompare);
         if (row == null) {
-          _boxError("Kiểm tra lại thông tin box card 2!");
+          _boxError(tr('msgCheckBoxCard', {'n': '2'}));
           return;
         }
 
@@ -608,12 +654,12 @@ class _ExampleWidgetState extends State<CheckInspection> {
           }
           hideKeyboard();
         } else {
-          _boxError("Kiểm tra lại thông tin box card 1!");
+          _boxError(tr('msgCheckBoxCard', {'n': '1'}));
         }
       }
     } catch (e) {
       Closepending();
-      thongbaoNG(e.toString());
+      thongbaoNG(tr('error', {'e': e.toString()}));
     }
   }
 
@@ -658,19 +704,19 @@ class _ExampleWidgetState extends State<CheckInspection> {
       (trangthai_TTcheck == "waiting" && group_OK_NG2 != "") ? "1" : "0";
 
       if (txtusersubmit.text == "") {
-        thongbaoNG("Người kiểm tra QC không được trống!");
+        thongbaoNG(tr('msgQcUserEmpty'));
         txtusersubmit.text = "";
         safeRequestFocus(usersubmitid);
         return;
       }
       if (LotQty.toString() == "0") {
-        thongbaoNG("số lượng lô = 0, Bạn check lại thông tin!");
+        thongbaoNG(tr('msgLotQtyZero'));
         txtrecheck.text = "";
         safeRequestFocus(recheckid);
         return;
       }
       if (checkunit == true && txtbox.text == "") {
-        thongbaoNG("Hàng này bắt buộc phai scan box!");
+        thongbaoNG(tr('msgMustScanBox'));
         safeRequestFocus(boxid);
         return;
       }
@@ -698,19 +744,19 @@ class _ExampleWidgetState extends State<CheckInspection> {
         final row = _firstRow(dtGR);
         if (row == null) {
           Closepending();
-          thongbaoNG("NG, Check GR, Liên hệ IT!");
+          thongbaoNG(tr('msgCheckGR'));
         } else if (_cell(row, 0) == "1") {
           await doSubmit();
         } else {
           Closepending();
-          thongbaoNG("Số lượng này chưa nhập kho, Chờ MCS hoàn thành!");
+          thongbaoNG(tr('msgNotInStock'));
         }
       } else {
         await doSubmit();
       }
     } catch (e) {
       Closepending();
-      thongbaoNG("loi try cach: $e");
+      thongbaoNG(tr('error', {'e': e.toString()}));
     }
   }
 
@@ -751,18 +797,18 @@ class _ExampleWidgetState extends State<CheckInspection> {
 
     final row = _firstRow(dtupdate);
     if (row == null) {
-      thongbaoNG("NG, He thong, lien he IT!");
+      thongbaoNG(tr('msgSystemNG'));
       return;
     }
 
     final String kequa = _cell(row, 0);
     if (kequa == "1") {
-      thongbaoOK("Hoàn thành trang thái lấy hàng!");
+      thongbaoOK(tr('msgPickupDone'));
       reset();
       return;
     }
     if (kequa == "3") {
-      thongbaoNG("Bạn không có quyền sửa kết quả kiểm tra!");
+      thongbaoNG(tr('msgNoPermission'));
       return;
     }
 
@@ -791,7 +837,7 @@ class _ExampleWidgetState extends State<CheckInspection> {
     } else if (slngNum > 0) {
       await _truKhoMCS(barcode, barcodeBox, SLNG, "NG");
     } else {
-      thongbaoOK("Kiểm tra hàng thành công!");
+      thongbaoOK(tr('msgCheckSuccess'));
     }
 
     if (mounted) reset();
@@ -805,16 +851,15 @@ class _ExampleWidgetState extends State<CheckInspection> {
     final row = _firstRow(dtkq);
     if (row == null) return;
     if (_cell(row, 0) != '0') {
-      thongbaoOK("Kiểm tra hàng thành công!");
+      thongbaoOK(tr('msgCheckSuccess'));
     } else {
-      thongbaoOK("Kiểm tra hàng thành công! Chưa trừ kho MCS");
+      thongbaoOK(tr('msgCheckSuccessNoMCS'));
     }
   }
 
   Future<void> _xuLyNGAllLot(
       String barcode, String barcodeBox, String SLNG) async {
-    final int? NGallLot = await showdialognotify(
-        "Bạn xác nhận trường hợp này có phải đánh giá All LOT không?");
+    final int? NGallLot = await showdialognotify(tr('msgConfirmNGAllLot'));
     if (!mounted) return;
 
     if (NGallLot == 1) {
@@ -824,9 +869,9 @@ class _ExampleWidgetState extends State<CheckInspection> {
       final row = _firstRow(dtkq);
       if (row == null) return;
       if (_cell(row, 0) != '0') {
-        thongbaoOK("Kiểm tra hàng thành công!");
+        thongbaoOK(tr('msgCheckSuccess'));
       } else {
-        thongbaoOK("Kiểm tra hàng thành công! Chưa trừ kho MCS");
+        thongbaoOK(tr('msgCheckSuccessNoMCS'));
       }
     } else {
       // revert lai so luong bang free location
@@ -836,9 +881,9 @@ class _ExampleWidgetState extends State<CheckInspection> {
       final row = _firstRow(dtkq);
       if (row == null) return;
       if (_cell(row, 0) != '0') {
-        thongbaoOK("Revert hàng thành công! ban phai danh gia Lai!");
+        thongbaoOK(tr('msgRevertSuccess'));
       } else {
-        thongbaoNG("NG! kiem tra lai thong tin");
+        thongbaoNG(tr('msgCheckInfoNG'));
       }
     }
   }
@@ -848,7 +893,7 @@ class _ExampleWidgetState extends State<CheckInspection> {
   Future<void> _onDeletePressed() async {
     try {
       if (txtusersubmit.text == "") {
-        thongbaoNG("Người kiểm tra QC không được trống!");
+        thongbaoNG(tr('msgQcUserEmpty'));
         txtusersubmit.text = "";
         safeRequestFocus(usersubmitid);
         return;
@@ -862,15 +907,15 @@ class _ExampleWidgetState extends State<CheckInspection> {
       final row = _firstRow(dt_huycheck);
       final String kequa = row == null ? '' : _cell(row, 0);
       if (kequa == "1") {
-        thongbaoOK("Hủy hàng thành công!");
+        thongbaoOK(tr('msgDeleteSuccess'));
         reset();
       } else if (kequa == "2") {
-        thongbaoNG("Hàng đã được đánh giá, không thể hủy!");
+        thongbaoNG(tr('msgAlreadyJudged'));
       } else {
-        thongbaoNG("Lô hàng đã được hủy, kiểm tra lại!");
+        thongbaoNG(tr('msgAlreadyDeleted'));
       }
     } catch (e) {
-      thongbaoNG("loi try cach: $e");
+      thongbaoNG(tr('error', {'e': e.toString()}));
     }
   }
 
@@ -888,8 +933,7 @@ class _ExampleWidgetState extends State<CheckInspection> {
 
       final row = _firstRow(dtinfor);
       if (row == null) {
-        thongbaoNG(
-            "Hàng này không qua Map freelocation! \n Liên hệ MCS để fix vị trí?");
+        thongbaoNG(tr('msgNotInFreeLocation'));
         return;
       }
 
@@ -984,7 +1028,7 @@ class _ExampleWidgetState extends State<CheckInspection> {
       }
     } catch (e) {
       Closepending();
-      thongbaoNG(e.toString());
+      thongbaoNG(tr('error', {'e': e.toString()}));
     }
   }
 
@@ -999,7 +1043,7 @@ class _ExampleWidgetState extends State<CheckInspection> {
 
     final row = _firstRow(dtrcheck);
     if (row == null || _cell(row, 0) == '0') {
-      thongbaoNG("Hàng không có trong hệ thống!, liên hệ IT!");
+      thongbaoNG(tr('msgNotInSystem'));
       txtScan.text = "";
       safeRequestFocus(scanid);
       return;
@@ -1030,21 +1074,18 @@ class _ExampleWidgetState extends State<CheckInspection> {
     bool focusQtyInput;
 
     if (typerecheck == 'Hang1Nam') {
-      message =
-      "Bạn đang kiểm tra hàng quá hạn 1 năm? \n Bạn phải nhập Số lượng vào!";
+      message = tr('msgOver1Year');
       vitriInsert = "Hang1Nam";
       soluongInsert = "0";
       focusQtyInput = true;
     } else if (typerecheck == 'recheck') {
-      message =
-      "Hàng này là hàng recheck, Nếu kiểm tra không? \n Bạn phải nhập Số lượng vào!";
+      message = tr('msgRecheck');
       vitriInsert = "recheck";
       soluongInsert = soluonglot;
       focusQtyInput = true;
     } else {
       // hang non inspection --> insert luon vao bang freelocation cua IQC
-      message =
-      "Hàng này không qua Map freelocation! \n Bạn có muốn kiểm tra không?";
+      message = tr('msgNonInspection');
       vitriInsert = "Noninspection";
       soluongInsert = soluonglot;
       focusQtyInput = false;
@@ -1065,7 +1106,7 @@ class _ExampleWidgetState extends State<CheckInspection> {
 
     final newRow = _firstRow(dtupdate);
     if (newRow == null) {
-      thongbaoNG("NG, Kiểm tra lại thông tin!");
+      thongbaoNG(tr('msgCheckInfoNG2'));
       reset();
       return;
     }
@@ -1125,14 +1166,14 @@ class _ExampleWidgetState extends State<CheckInspection> {
   void recheckid_function(String soluonginput) {
     if (soluonginput.trim().isEmpty ||
         double.tryParse(soluonginput.trim()) == null) {
-      thongbaoNG("Bạn chưa nhập số lượng lô!");
+      thongbaoNG(tr('msgNoLotQty'));
       txtrecheck.text = "";
       safeRequestFocus(recheckid);
       return;
     }
 
     if (_toDouble(soluonginput) > _toDouble(LotQty)) {
-      thongbaoNG("Số lượng nhập vào lớn hơn so lượng lot ban đầu!");
+      thongbaoNG(tr('msgQtyOverLot'));
       txtrecheck.text = "";
       safeRequestFocus(recheckid);
       return;
@@ -1183,13 +1224,13 @@ class _ExampleWidgetState extends State<CheckInspection> {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return const AlertDialog(
+        return AlertDialog(
           content: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(),
-              SizedBox(width: 10),
-              Text('Loading...'),
+              const CircularProgressIndicator(),
+              const SizedBox(width: 10),
+              Text(tr('loading')),
             ],
           ),
         );
@@ -1199,7 +1240,6 @@ class _ExampleWidgetState extends State<CheckInspection> {
 
   void Closepending() {
     // Chi dong khi dialog Loading dang mo.
-    // Truoc day goi pop() khi khong co dialog => pop luon ca man hinh.
     if (!mounted || !_isLoading) return;
     _isLoading = false;
     Navigator.of(context, rootNavigator: true).pop();
@@ -1212,17 +1252,17 @@ class _ExampleWidgetState extends State<CheckInspection> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Notify'),
+          title: Text(tr('notify')),
           content: SingleChildScrollView(
             child: ListBody(children: <Widget>[Text(notify)]),
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Yes'),
+              child: Text(tr('yes')),
               onPressed: () => Navigator.of(context).pop(1),
             ),
             TextButton(
-              child: const Text('No'),
+              child: Text(tr('no')),
               onPressed: () => Navigator.of(context).pop(0),
             ),
           ],

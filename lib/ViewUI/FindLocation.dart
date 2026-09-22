@@ -37,12 +37,24 @@ class _ExampleWidgetState extends State<Findlocation> {
   /// Chuyen gia tri bat ky sang String, null => ''.
   String _str(dynamic v) => v == null ? '' : v.toString();
 
+  // Future<void> autogetuser() async {
+  //   final SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   if (!mounted) return;
+  //   setState(() async {
+  //     //userId = prefs.getString('username') ?? '';
+  //     userId = await getIt<AuthRepository>().getUserID();
+  //   });
+  // }
+
   Future<void> autogetuser() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    // final SharedPreferences prefs = await SharedPreferences.getInstance();
+    // final id = prefs.getString('username') ?? '';
+    final id = await getIt<AuthRepository>().getUserID();
+    print(id);
+
     if (!mounted) return;
-    setState(() async {
-      //userId = prefs.getString('username') ?? '';
-      userId = await getIt<AuthRepository>().getUserID();
+    setState(() {
+      userId = id;
     });
   }
 

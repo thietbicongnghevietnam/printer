@@ -93,12 +93,24 @@ class _ExampleWidgetState extends State<StatusInspection> {
       .toSet()
       .toList();
 
+  // Future<void> autogetuser() async {
+  //   final SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   if (!mounted) return;
+  //   setState(() async {
+  //     //userId = prefs.getString('username') ?? '';
+  //     userId = await getIt<AuthRepository>().getUserID();
+  //   });
+  // }
+
   Future<void> autogetuser() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    // final SharedPreferences prefs = await SharedPreferences.getInstance();
+    // final id = prefs.getString('username') ?? '';
+    final id = await getIt<AuthRepository>().getUserID();
+    print(id);
+
     if (!mounted) return;
-    setState(() async {
-      //userId = prefs.getString('username') ?? '';
-      userId = await getIt<AuthRepository>().getUserID();
+    setState(() {
+      userId = id;
     });
   }
 

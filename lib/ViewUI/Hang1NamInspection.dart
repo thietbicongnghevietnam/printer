@@ -109,12 +109,24 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
 
   void checkRadio2(String value) => setState(() => group_OK_NG2 = value);
 
+  // Future<void> autogetuser() async {
+  //   final SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   if (!mounted) return;
+  //   setState(() async {
+  //     //userId = prefs.getString('username') ?? '';
+  //     userId = await getIt<AuthRepository>().getUserID();
+  //   });
+  // }
+
   Future<void> autogetuser() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    // final SharedPreferences prefs = await SharedPreferences.getInstance();
+    // final id = prefs.getString('username') ?? '';
+    final id = await getIt<AuthRepository>().getUserID();
+    print(id);
+
     if (!mounted) return;
-    setState(() async {
-      //userId = prefs.getString('username') ?? '';
-      userId = await getIt<AuthRepository>().getUserID();
+    setState(() {
+      userId = id;
     });
   }
 

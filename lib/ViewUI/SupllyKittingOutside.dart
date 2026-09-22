@@ -53,12 +53,24 @@ class _SupllyKittingOutsideState extends State<SupllyKittingOutside> {
     super.dispose();
   }
 
+  // Future<void> autogetuser() async {
+  //   final SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   final String id = await getIt<AuthRepository>().getUserID();
+  //   if (!mounted) return;
+  //   setState(() => userId = id);
+  //   debugPrint('[SupllyKittingOutside] user: $userId');
+  // }
+
   Future<void> autogetuser() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final String id = await getIt<AuthRepository>().getUserID();
+    // final SharedPreferences prefs = await SharedPreferences.getInstance();
+    // final id = prefs.getString('username') ?? '';
+    final id = await getIt<AuthRepository>().getUserID();
+    print(id);
+
     if (!mounted) return;
-    setState(() => userId = id);
-    debugPrint('[SupllyKittingOutside] user: $userId');
+    setState(() {
+      userId = id;
+    });
   }
 
   void _hideKeyboard() async {

@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../ControllerAPI/api_IQC.dart';
 import '../di/di.dart';
 import '../repositories/auth_repository.dart';
+import '../l10n/app_lang.dart';
 
 class RecheckInspection extends StatefulWidget {
   const RecheckInspection({super.key});
@@ -119,18 +120,42 @@ class _ExampleWidgetState extends State<RecheckInspection> {
 
   void checkRadio2(String value) => setState(() => group_OK_NG2 = value);
 
+  // Future<void> autogetuser() async {
+  //   final SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   if (!mounted) return;
+  //   setState(() async {
+  //     //userId = prefs.getString('username') ?? '';
+  //     userId = await getIt<AuthRepository>().getUserID();
+  //   });
+  // }
+
   Future<void> autogetuser() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    // final SharedPreferences prefs = await SharedPreferences.getInstance();
+    // final id = prefs.getString('username') ?? '';
+    final id = await getIt<AuthRepository>().getUserID();
+    print(id);
+
     if (!mounted) return;
-    setState(() async {
-      //userId = prefs.getString('username') ?? '';
-      userId = await getIt<AuthRepository>().getUserID();
+    setState(() {
+      userId = id;
     });
   }
+
+
+  // ==================== NGON NGU ====================
+
+  /// Khi doi ngon ngu => build lai man hinh.
+  void _onLangChanged() {
+    if (!mounted) return;
+    setState(() {});
+  }
+
 
   @override
   void initState() {
     super.initState();
+    LangController.current.addListener(_onLangChanged);
+    LangController.load(); // doc ngon ngu da luu lan truoc
     autogetuser();
     hideKeyboard();
     txtstatus.addListener(_updateColor);
@@ -156,6 +181,8 @@ class _ExampleWidgetState extends State<RecheckInspection> {
 
   @override
   void dispose() {
+    LangController.current.removeListener(_onLangChanged); // ← thêm
+
     txtstatus.removeListener(_updateColor);
 
     for (final c in [
@@ -181,6 +208,34 @@ class _ExampleWidgetState extends State<RecheckInspection> {
       if (!mounted) return;
       FocusScope.of(context).requestFocus(node);
     });
+  }
+
+  /// Nút chọn ngôn ngữ trên AppBar.
+  Widget _languageButton() {
+    return PopupMenuButton<AppLang>(
+      tooltip: tr('language'),
+      initialValue: LangController.current.value,
+      onSelected: (lang) => LangController.set(lang),
+      itemBuilder: (_) => const [
+        PopupMenuItem(value: AppLang.vi, child: Text('🇻🇳  Tiếng Việt')),
+        PopupMenuItem(value: AppLang.en, child: Text('🇬🇧  English')),
+        // sau này thêm: PopupMenuItem(value: AppLang.ja, child: Text('🇯🇵  日本語')),
+      ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.language),
+            const SizedBox(width: 4),
+            Text(
+              LangController.isVi ? 'VI' : 'EN',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   // ==================== UI WIDGETS ====================
@@ -315,7 +370,8 @@ class _ExampleWidgetState extends State<RecheckInspection> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Recheck Inspection IQC'),
+        title: Text(tr('recheckTitle')),
+        actions: [_languageButton()],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -327,8 +383,8 @@ class _ExampleWidgetState extends State<RecheckInspection> {
               Wrap(
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  _radioOption("Sample", typecheck, "Check Sample", checkRadio),
-                  _radioOption("Rohs", typecheck, "Check Rohs", checkRadio),
+                  _radioOption("Sample", typecheck, tr('checkSample'), checkRadio),
+                  _radioOption("Rohs", typecheck, tr('checkRohs'), checkRadio),
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -343,9 +399,9 @@ class _ExampleWidgetState extends State<RecheckInspection> {
                           setState(() => isboxng = value ?? false);
                         },
                       ),
-                      const Text(
-                        'scan boxes',
-                        style: TextStyle(
+                      Text(
+                        tr('scanBoxes'),
+                        style: const TextStyle(
                             fontSize: 12,
                             color: Colors.blue,
                             fontWeight: FontWeight.bold),
@@ -364,11 +420,11 @@ class _ExampleWidgetState extends State<RecheckInspection> {
                     child: _field(
                       controller: txtScan,
                       focusNode: scanid,
-                      label: 'Scan RecevingCard',
+                      label: tr('scanReceivingCard'),
                       autofocus: true,
                       onSubmitted: (value) {
                         if (typecheck == "") {
-                          thongbaoNG("Bạn chưa chọn kiểu loại hình kiểm tra");
+                          thongbaoNG(tr('msgNoCheckType'));
                           txtScan.text = "";
                           safeRequestFocus(scanid);
                         } else {
@@ -382,7 +438,7 @@ class _ExampleWidgetState extends State<RecheckInspection> {
                     child: _field(
                       controller: txtbox,
                       focusNode: boxid,
-                      label: 'Scan box',
+                      label: tr('scanBoxes'),
                       onSubmitted: _onBoxSubmitted,
                     ),
                   ),
@@ -394,11 +450,11 @@ class _ExampleWidgetState extends State<RecheckInspection> {
               // --- Invoice / Pos / Date ---
               Row(
                 children: [
-                  Expanded(flex: 4, child: _infoBox('Invoice', lblinvoice)),
+                  Expanded(flex: 4, child: _infoBox(tr('invoice'), lblinvoice)),
                   const SizedBox(width: 4),
-                  Expanded(flex: 3, child: _infoBox('Pos.', vitri)),
+                  Expanded(flex: 3, child: _infoBox(tr('position'), vitri)),
                   const SizedBox(width: 4),
-                  Expanded(flex: 4, child: _infoBox('Date', lblincomingdate)),
+                  Expanded(flex: 4, child: _infoBox(tr('date'), lblincomingdate)),
                 ],
               ),
 
@@ -407,14 +463,14 @@ class _ExampleWidgetState extends State<RecheckInspection> {
               // --- Qty + Insert recheck OK / NG ---
               Row(
                 children: [
-                  Expanded(flex: 2, child: _infoBox('Qty', LotQty)),
+                  Expanded(flex: 2, child: _infoBox(tr('qty'), LotQty)),
                   const SizedBox(width: 4),
                   Expanded(
                     flex: 3,
                     child: _checkOption(
                       value: isinsert,
                       disabled: isDisabledOK,
-                      label: 'Insert recheck OK',
+                      label: tr('insertRecheckOK'),
                       onChanged: (v) => setState(() => isinsert = v),
                     ),
                   ),
@@ -423,7 +479,7 @@ class _ExampleWidgetState extends State<RecheckInspection> {
                     child: _checkOption(
                       value: iskhoNG,
                       disabled: isDisabledNG,
-                      label: 'Insert recheck NG',
+                      label: tr('insertRecheckNG'),
                       onChanged: (v) => setState(() => iskhoNG = v),
                     ),
                   ),
@@ -440,7 +496,7 @@ class _ExampleWidgetState extends State<RecheckInspection> {
                     child: _field(
                       controller: txtcodedate,
                       focusNode: codateid,
-                      label: 'Code date',
+                      label: tr('codeDate'),
                       onSubmitted: codateid_function,
                     ),
                   ),
@@ -449,7 +505,7 @@ class _ExampleWidgetState extends State<RecheckInspection> {
                     child: _field(
                       controller: txtqtybox,
                       focusNode: qtyboxid,
-                      label: 'slbox',
+                      label: tr('slbox'),
                       hint: '0',
                       readOnly: true,
                     ),
@@ -459,7 +515,7 @@ class _ExampleWidgetState extends State<RecheckInspection> {
                     child: _field(
                       controller: txtrecheck,
                       focusNode: recheckid,
-                      label: 'QtyInput',
+                      label: tr('qtyInput'),
                       hint: '0',
                       readOnly: isReadOnly,
                       keyboardType: TextInputType.number,
@@ -479,7 +535,7 @@ class _ExampleWidgetState extends State<RecheckInspection> {
                     child: _field(
                       controller: txtremark,
                       focusNode: remarkid,
-                      label: 'Remark',
+                      label: tr('remark'),
                       onSubmitted: (value) => safeRequestFocus(soluonghuyid),
                     ),
                   ),
@@ -488,7 +544,7 @@ class _ExampleWidgetState extends State<RecheckInspection> {
                     child: _field(
                       controller: txtSLNG,
                       focusNode: slngid,
-                      label: 'QtyNG',
+                      label: tr('qtyNG'),
                       hint: '0',
                       keyboardType: TextInputType.number,
                       onSubmitted: (value) {
@@ -510,7 +566,7 @@ class _ExampleWidgetState extends State<RecheckInspection> {
                     child: _field(
                       controller: txtsoluonghuy,
                       focusNode: soluonghuyid,
-                      label: 'Q.Scrap',
+                      label: tr('qtyScrap'),
                       hint: '0',
                       keyboardType: TextInputType.number,
                     ),
@@ -520,7 +576,7 @@ class _ExampleWidgetState extends State<RecheckInspection> {
                     child: _field(
                       controller: txtusersubmit,
                       focusNode: usersubmitid,
-                      label: 'UserID',
+                      label: tr('userId'),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -528,7 +584,7 @@ class _ExampleWidgetState extends State<RecheckInspection> {
                     child: _field(
                       controller: txtstatus,
                       focusNode: statusid,
-                      label: 'Status',
+                      label: tr('status'),
                       readOnly: true,
                       fillColor: _boxColor,
                     ),
@@ -542,8 +598,8 @@ class _ExampleWidgetState extends State<RecheckInspection> {
               Wrap(
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  _radioOption("OK", group_OK_NG2, "Judment OK", checkRadio2),
-                  _radioOption("NG", group_OK_NG2, "Judment NG", checkRadio2),
+                  _radioOption("OK", group_OK_NG2, tr('judgmentOK'), checkRadio2),
+                  _radioOption("NG", group_OK_NG2, tr('judgmentNG'), checkRadio2),
                 ],
               ),
 
@@ -552,12 +608,12 @@ class _ExampleWidgetState extends State<RecheckInspection> {
               // --- Buttons: nut nho, tren 1 hang ---
               Row(
                 children: [
-                  Expanded(child: _smallButton('Submit', _onSubmitPressed)),
+                  Expanded(child: _smallButton(tr('submit'), _onSubmitPressed)),
                   const SizedBox(width: 4),
-                  Expanded(child: _smallButton('Clear', reset)),
+                  Expanded(child: _smallButton(tr('reset'), reset)),
                   const SizedBox(width: 4),
                   Expanded(
-                    child: _smallButton('Exit', () {
+                    child: _smallButton(tr('exit'), () {
                       // Quay lai IQC Menu dang co san trong stack
                       Navigator.of(context).pop();
                     }),
@@ -594,7 +650,7 @@ class _ExampleWidgetState extends State<RecheckInspection> {
 
         final row = _firstRow(dtupdatebox);
         if (row == null) {
-          _boxError("Kiểm tra lại thông tin box card 3!");
+          _boxError(tr('msgCheckBoxCard', {'n': '3'}));
           return;
         }
 
@@ -614,7 +670,7 @@ class _ExampleWidgetState extends State<RecheckInspection> {
           }
           hideKeyboard();
         } else {
-          _boxError("Kiểm tra lại thông tin box card 4!");
+          _boxError(tr('msgCheckBoxCard', {'n': '4'}));
         }
       } else {
         // truong hop normal
@@ -624,7 +680,7 @@ class _ExampleWidgetState extends State<RecheckInspection> {
 
         final row = _firstRow(dtcompare);
         if (row == null) {
-          _boxError("Kiểm tra lại thông tin box card 2!");
+          _boxError(tr('msgCheckBoxCard', {'n': '2'}));
           return;
         }
 
@@ -638,7 +694,7 @@ class _ExampleWidgetState extends State<RecheckInspection> {
             hideKeyboard();
           }
         } else {
-          _boxError("Kiểm tra lại thông tin box card 1!");
+          _boxError(tr('msgCheckBoxCard', {'n': '1'}));
         }
       }
     } catch (e) {
@@ -651,7 +707,7 @@ class _ExampleWidgetState extends State<RecheckInspection> {
 
   bool _checkQtyRecheck() {
     if (txtrecheck.text.trim() == "" || _toDouble(txtrecheck.text) == 0) {
-      thongbaoNG("Bạn chưa nhập số lượng Recheck!");
+      thongbaoNG(tr('msgNoRecheckQty'));
       txtrecheck.text = "";
       safeRequestFocus(recheckid);
       return false;
@@ -698,19 +754,19 @@ class _ExampleWidgetState extends State<RecheckInspection> {
       (trangthai_TTcheck == "waiting" && group_OK_NG2 != "") ? "1" : "0";
 
       if (txtusersubmit.text == "") {
-        thongbaoNG("Người kiểm tra QC không được trống!");
+        thongbaoNG(tr('msgQcUserEmpty'));
         txtusersubmit.text = "";
         safeRequestFocus(usersubmitid);
         return;
       }
       if (LotQty.toString() == "0") {
-        thongbaoNG("số lượng lô = 0, Bạn check lại thông tin!");
+        thongbaoNG(tr('msgLotQtyZero'));
         txtrecheck.text = "";
         safeRequestFocus(recheckid);
         return;
       }
       if (checkunit == true && txtbox.text == "") {
-        thongbaoNG("Hàng này bắt buộc phai scan box!");
+        thongbaoNG(tr('msgMustScanBox'));
         safeRequestFocus(boxid);
         return;
       }
@@ -750,13 +806,13 @@ class _ExampleWidgetState extends State<RecheckInspection> {
 
         final row = _firstRow(dtrecheck);
         if (row == null) {
-          thongbaoNG("NG, He thong, lien he IT1!");
+          thongbaoNG(tr('msgSystemNG'));
         } else if (_cell(row, 0) == "1") {
-          thongbaoOK("Hoàn thành trang thái lấy hàng!");
+          thongbaoOK(tr('msgPickupDone'));
           reset();
         } else {
           // kequa == "4" khong the recheck, lo chua duoc danh gia
-          thongbaoNG("Lô hàng chưa được đánh giá OK/NG lần nào!");
+          thongbaoNG(tr('msgNotJudgedYet'));
         }
       } else if (iskhoNG == true && trangthai_TTcheck != "checked") {
         // ===== hang recheck kho NG =====
@@ -794,11 +850,11 @@ class _ExampleWidgetState extends State<RecheckInspection> {
 
         final row = _firstRow(dtrecheckNG);
         if (row == null) {
-          thongbaoNG("NG, He thong, lien he IT3!");
+          thongbaoNG(tr('msgSystemNG'));
         } else if (_cell(row, 0) == "1") {
           await function_rohs_NG_auto(SLNG);
         } else {
-          thongbaoNG("Lô hàng chưa được đánh giá OK/NG lần nào!");
+          thongbaoNG(tr('msgNotJudgedYet'));
         }
       } else {
         // ===== submit binh thuong =====
@@ -815,18 +871,18 @@ class _ExampleWidgetState extends State<RecheckInspection> {
 
         final row = _firstRow(dtupdate);
         if (row == null) {
-          thongbaoNG("NG, He thong, lien he IT2!");
+          thongbaoNG(tr('msgSystemNG'));
           return;
         }
 
         final String kequa = _cell(row, 0);
         if (kequa == "1") {
-          thongbaoOK("Hoàn thành trang thái lấy hàng!");
+          thongbaoOK(tr('msgPickupDone'));
           reset();
         } else if (kequa == "3") {
-          thongbaoNG("Bạn không có quyền sửa kết quả kiểm tra!");
+          thongbaoNG(tr('msgNoPermission'));
         } else if (kequa == "4") {
-          thongbaoNG("Lô hàng này chưa được kiểm NG!");
+          thongbaoNG(tr('msgNotNGYet'));
         } else {
           // kequa == "2"
           await function_rohs_NG_auto(SLNG);
@@ -848,14 +904,14 @@ class _ExampleWidgetState extends State<RecheckInspection> {
     if (_cell(row, 0) != '0') {
       thongbaoOK(okMessage);
     } else {
-      thongbaoOK("Kiểm tra hàng thành công! Chưa trừ kho MCS");
+      thongbaoOK(tr('msgCheckSuccessNoMCS'));
     }
     reset();
   }
 
   Future<void> _xuLyNGAllLot(String SLNG) async {
     final int? NGallLot = await showdialognotify(
-        "Bạn xác nhận trường hợp này có phải đánh giá All LOT không?");
+        tr('msgConfirmNGAllLot'));
     if (!mounted || NGallLot != 1) return;
     // chua viet function revert neu chon No o day
 
@@ -865,9 +921,9 @@ class _ExampleWidgetState extends State<RecheckInspection> {
     final row = _firstRow(dtkq);
     if (row == null) return;
     if (_cell(row, 0) != '0') {
-      thongbaoOK("Kiểm tra hàng thành công!");
+      thongbaoOK(tr('msgCheckSuccess'));
     } else {
-      thongbaoOK("Kiểm tra hàng thành công! Chưa trừ kho MCS");
+      thongbaoOK(tr('msgCheckSuccessNoMCS'));
     }
     reset();
   }
@@ -886,13 +942,13 @@ class _ExampleWidgetState extends State<RecheckInspection> {
     } else if (qtyRoshNum > 0 && slngNum > 0) {
       // tru ca 2
       final String qtytong = (qtyRoshNum + slngNum).toString();
-      await _truKhoMCS(qtytong, "Kiểm tra hàng thành công!");
+      await _truKhoMCS(qtytong, tr('msgCheckSuccess'));
     } else if (qtyRoshNum > 0) {
-      await _truKhoMCS(qtyRosh, "Đánh giá hàng kho NG thành công!");
+      await _truKhoMCS(qtyRosh, tr('msgNGSuccess'));
     } else if (slngNum > 0) {
-      await _truKhoMCS(SLNG, "Đánh giá hàng kho NG thành công!");
+      await _truKhoMCS(SLNG, tr('msgNGSuccess'));
     } else {
-      thongbaoOK("Kiểm tra hàng thành công!");
+      thongbaoOK(tr('msgCheckSuccess'));
       reset();
     }
   }
@@ -910,7 +966,7 @@ class _ExampleWidgetState extends State<RecheckInspection> {
       final row = _firstRow(dtinfor);
       if (row == null) {
         // hang recheck la phai duoc check 1 lan roi
-        thongbaoNG("Lô hàng này chưa được check lần nào!");
+        thongbaoNG(tr('msgNotCheckedYet'));
         return;
       }
 
@@ -918,7 +974,7 @@ class _ExampleWidgetState extends State<RecheckInspection> {
       if (mahang == '0') {
         // phieu recheck in lai ben MCS
         final int? rs = await showdialognotify(
-            "Hàng này là phiếu recheck in lại! \n Bạn có muốn kiểm tiếp tục?");
+            tr('msgRecheckReprint'));
         if (!mounted) return;
         if (rs == 1) {
           await Input_Data_IQC(chuoibarcode, dtinfor);
@@ -1054,7 +1110,7 @@ class _ExampleWidgetState extends State<RecheckInspection> {
 
     final row = _firstRow(dtrcheck);
     if (row == null || _cell(row, 0) == '0') {
-      thongbaoNG("Hàng không có trong hệ thống!, liên hệ IT!");
+      thongbaoNG(tr('msgNotInSystem'));
       txtScan.text = "";
       safeRequestFocus(scanid);
       return;
@@ -1132,14 +1188,14 @@ class _ExampleWidgetState extends State<RecheckInspection> {
   void recheckid_function(String soluonginput) {
     if (soluonginput.trim().isEmpty ||
         double.tryParse(soluonginput.trim()) == null) {
-      thongbaoNG("Bạn chưa nhập số lượng lô!");
+      thongbaoNG(tr('msgNoLotQty'));
       txtrecheck.text = "";
       safeRequestFocus(recheckid);
       return;
     }
 
     if (_toDouble(soluonginput) > _toDouble(LotQty)) {
-      thongbaoNG("Số lượng nhập vào lớn hơn so lượng lot ban đầu!");
+      thongbaoNG(tr('msgQtyOverLot'));
       txtrecheck.text = "";
       safeRequestFocus(recheckid);
       return;
@@ -1190,13 +1246,13 @@ class _ExampleWidgetState extends State<RecheckInspection> {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return const AlertDialog(
+        return AlertDialog(
           content: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(),
-              SizedBox(width: 10),
-              Text('Loading...'),
+              const CircularProgressIndicator(),
+              const SizedBox(width: 10),
+              Text(tr('loading')),
             ],
           ),
         );
@@ -1218,17 +1274,17 @@ class _ExampleWidgetState extends State<RecheckInspection> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Notify'),
+          title: Text(tr('notify')),
           content: SingleChildScrollView(
             child: ListBody(children: <Widget>[Text(notify)]),
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Yes'),
+              child: Text(tr('yes')),
               onPressed: () => Navigator.of(context).pop(1),
             ),
             TextButton(
-              child: const Text('No'),
+              child: Text(tr('no')),
               onPressed: () => Navigator.of(context).pop(0),
             ),
           ],

@@ -90,13 +90,25 @@ class _PrintReceivingCardPageState extends State<PrintReceivingCardPage> {
     super.dispose();
   }
 
+  // Future<void> autogetuser() async {
+  //   final SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   if (!mounted) return;
+  //   setState(() async {
+  //     //userId = prefs.getString('username') ?? '';
+  //     userId = await getIt<AuthRepository>().getUserID();
+  //     print(userId);
+  //   });
+  // }
+
   Future<void> autogetuser() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    // final SharedPreferences prefs = await SharedPreferences.getInstance();
+    // final id = prefs.getString('username') ?? '';
+    final id = await getIt<AuthRepository>().getUserID();
+    print(id);
+
     if (!mounted) return;
-    setState(() async {
-      //userId = prefs.getString('username') ?? '';
-      userId = await getIt<AuthRepository>().getUserID();
-      print(userId);
+    setState(() {
+      userId = id;
     });
   }
 

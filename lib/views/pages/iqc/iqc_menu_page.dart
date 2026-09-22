@@ -39,11 +39,23 @@ class _IQCMenuPageState extends State<IQCMenuPage> {
     _getUser();
   }
 
+  // Future<void> _getUser() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   setState(() async {
+  //     userId = await getIt<AuthRepository>().getUserID();
+  //     print(userId);
+  //   });
+  // }
+
   Future<void> _getUser() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() async {
-      userId = await getIt<AuthRepository>().getUserID();
-      print(userId);
+    // final SharedPreferences prefs = await SharedPreferences.getInstance();
+    // final id = prefs.getString('username') ?? '';
+    final id = await getIt<AuthRepository>().getUserID();
+    print(id);
+
+    if (!mounted) return;
+    setState(() {
+      userId = id;
     });
   }
 
