@@ -204,6 +204,7 @@ class _ExampleWidgetState extends State<CheckInspection> {
       itemBuilder: (_) => const [
         PopupMenuItem(value: AppLang.vi, child: Text('🇻🇳  Tiếng Việt')),
         PopupMenuItem(value: AppLang.en, child: Text('🇬🇧  English')),
+        PopupMenuItem(value: AppLang.ja, child: Text('🇯🇵  日本語')),
       ],
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -212,8 +213,14 @@ class _ExampleWidgetState extends State<CheckInspection> {
           children: [
             const Icon(Icons.language),
             const SizedBox(width: 4),
-            Text(LangController.isVi ? 'VI' : 'EN',
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              switch (LangController.current.value) {
+                AppLang.vi => 'VI',
+                AppLang.en => 'EN',
+                AppLang.ja => 'JA',
+              },
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
           ],
         ),
       ),
