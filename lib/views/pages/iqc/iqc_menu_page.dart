@@ -189,16 +189,16 @@ class _IQCMenuPageState extends State<IQCMenuPage> {
             const SizedBox(height: 5),
 
             // 7. update kitting outside
-            _buildButton(
-              title: '7. Supply kitting outside',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const SupllyKittingOutside()),
-                );
-              },
-            ),
+            // _buildButton(
+            //   title: '7. Supply kitting outside',
+            //   onPressed: () {
+            //     Navigator.push(
+            //       context,
+            //       MaterialPageRoute(
+            //           builder: (context) => const SupllyKittingOutside()),
+            //     );
+            //   },
+            // ),
 
             // const SizedBox(height: 10),
             //

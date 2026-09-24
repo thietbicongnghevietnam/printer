@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../ControllerAPI/api_IQC.dart';
 import '../di/di.dart';
-import '../l10n/app_lang.dart';
 import '../repositories/auth_repository.dart';
 
 class Hang1NamInspection extends StatefulWidget {
@@ -91,14 +91,17 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
 
   // ==================== HELPERS ====================
 
+  /// Parse so an toan: chuoi rong / sai dinh dang => 0 (khong throw).
   double _toDouble(String? s) => double.tryParse((s ?? '').trim()) ?? 0;
 
+  /// Lay gia tri cot an toan: null / vuot index => ''.
   String _cell(List<dynamic> row, int index) {
     if (index < 0 || index >= row.length) return '';
     final v = row[index];
     return v == null ? '' : v.toString();
   }
 
+  /// Lay dong dau tien cua ket qua API, rong => null.
   List<dynamic>? _firstRow(List<Map<String, dynamic>> dt) =>
       dt.isEmpty ? null : dt[0].values.toList();
 
@@ -106,7 +109,18 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
 
   void checkRadio2(String value) => setState(() => group_OK_NG2 = value);
 
+  // Future<void> autogetuser() async {
+  //   final SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   if (!mounted) return;
+  //   setState(() async {
+  //     //userId = prefs.getString('username') ?? '';
+  //     userId = await getIt<AuthRepository>().getUserID();
+  //   });
+  // }
+
   Future<void> autogetuser() async {
+    // final SharedPreferences prefs = await SharedPreferences.getInstance();
+    // final id = prefs.getString('username') ?? '';
     final id = await getIt<AuthRepository>().getUserID();
     print(id);
 
@@ -116,18 +130,9 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
     });
   }
 
-  // ==================== NGON NGU ====================
-
-  void _onLangChanged() {
-    if (!mounted) return;
-    setState(() {});
-  }
-
   @override
   void initState() {
     super.initState();
-    LangController.current.addListener(_onLangChanged);
-    LangController.load();
     autogetuser();
     hideKeyboard();
     txtstatus.addListener(_updateColor);
@@ -153,7 +158,6 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
 
   @override
   void dispose() {
-    LangController.current.removeListener(_onLangChanged);
     txtstatus.removeListener(_updateColor);
 
     for (final c in [
@@ -170,6 +174,7 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
       f.dispose();
     }
 
+    // super.dispose() phai goi CUOI CUNG
     super.dispose();
   }
 
@@ -181,37 +186,6 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
   }
 
   // ==================== UI WIDGETS ====================
-
-  Widget _languageButton() {
-    return PopupMenuButton<AppLang>(
-      tooltip: tr('language'),
-      initialValue: LangController.current.value,
-      onSelected: (lang) => LangController.set(lang),
-      itemBuilder: (_) => const [
-        PopupMenuItem(value: AppLang.vi, child: Text('🇻🇳  Tiếng Việt')),
-        PopupMenuItem(value: AppLang.en, child: Text('🇬🇧  English')),
-        PopupMenuItem(value: AppLang.ja, child: Text('🇯🇵  日本語')),
-      ],
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.language),
-            const SizedBox(width: 4),
-            Text(
-              switch (LangController.current.value) {
-                AppLang.vi => 'VI',
-                AppLang.en => 'EN',
-                AppLang.ja => 'JA',
-              },
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _field({
     required TextEditingController controller,
@@ -247,6 +221,7 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
     );
   }
 
+  /// O hien thi thong tin (chi doc), co nhan giong TextField.
   Widget _infoBox(String label, String value) {
     return SizedBox(
       height: 50,
@@ -342,8 +317,7 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr('hang1NamTitle')),
-        actions: [_languageButton()],
+        title: const Text('More 1 Year Inspection IQC'),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -355,10 +329,8 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
               Wrap(
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  _radioOption(
-                      "Sample", typecheck, tr('checkSample'), checkRadio),
-                  _radioOption(
-                      "Rohs", typecheck, tr('checkRohs'), checkRadio),
+                  _radioOption("Sample", typecheck, "Check Sample", checkRadio),
+                  _radioOption("Rohs", typecheck, "Check Rohs", checkRadio),
                 ],
               ),
 
@@ -371,11 +343,11 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
                     child: _field(
                       controller: txtScan,
                       focusNode: scanid,
-                      label: tr('scanReceivingCard'),
+                      label: 'Scan RecevingCard',
                       autofocus: true,
                       onSubmitted: (value) {
                         if (typecheck == "") {
-                          thongbaoNG(tr('msgNoCheckType'));
+                          thongbaoNG("Bạn chưa chọn kiểu loại hình kiểm tra");
                           txtScan.text = "";
                           safeRequestFocus(scanid);
                         } else {
@@ -389,7 +361,7 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
                     child: _field(
                       controller: txtbox,
                       focusNode: boxid,
-                      label: tr('scanBox'),
+                      label: 'Scan box',
                       onSubmitted: _onBoxSubmitted,
                     ),
                   ),
@@ -401,19 +373,16 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
               // --- Invoice / Date / Insert 1Year ---
               Row(
                 children: [
-                  Expanded(
-                      flex: 4, child: _infoBox(tr('invoice'), lblinvoice)),
+                  Expanded(flex: 4, child: _infoBox('Invoice', lblinvoice)),
                   const SizedBox(width: 4),
-                  Expanded(
-                      flex: 4,
-                      child: _infoBox(tr('date'), lblincomingdate)),
+                  Expanded(flex: 4, child: _infoBox('Date', lblincomingdate)),
                   const SizedBox(width: 4),
                   Expanded(
                     flex: 3,
                     child: _checkOption(
                       value: isinsert,
                       disabled: isDisabled,
-                      label: tr('insert1Year'),
+                      label: 'Insert 1Year',
                       onChanged: (v) => setState(() => isinsert = v),
                     ),
                   ),
@@ -425,9 +394,9 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
               // --- Location / Qty Lot ---
               Row(
                 children: [
-                  Expanded(child: _infoBox(tr('location'), vitri)),
+                  Expanded(child: _infoBox('Location', vitri)),
                   const SizedBox(width: 8),
-                  Expanded(child: _infoBox(tr('qtyLot'), LotQty)),
+                  Expanded(child: _infoBox('Qty Lot', LotQty)),
                 ],
               ),
 
@@ -441,7 +410,7 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
                     child: _field(
                       controller: txtcodedate,
                       focusNode: codateid,
-                      label: tr('codeDate'),
+                      label: 'Code date',
                       onSubmitted: codateid_function,
                     ),
                   ),
@@ -450,7 +419,7 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
                     child: _field(
                       controller: txtrecheck,
                       focusNode: recheckid,
-                      label: tr('qtyInput'),
+                      label: 'QtyInput',
                       hint: '0',
                       keyboardType: TextInputType.number,
                       onSubmitted: recheckid_function,
@@ -469,7 +438,7 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
                     child: _field(
                       controller: txtremark,
                       focusNode: remarkid,
-                      label: tr('remark'),
+                      label: 'Remark',
                       onSubmitted: (value) => safeRequestFocus(soluonghuyid),
                     ),
                   ),
@@ -478,7 +447,7 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
                     child: _field(
                       controller: txtSLNG,
                       focusNode: slngid,
-                      label: tr('qtyNG'),
+                      label: 'QtyNG',
                       hint: '0',
                       keyboardType: TextInputType.number,
                     ),
@@ -495,7 +464,7 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
                     child: _field(
                       controller: txtsoluonghuy,
                       focusNode: soluonghuyid,
-                      label: tr('qtyScrap'),
+                      label: 'Q.Scrap',
                       hint: '0',
                       keyboardType: TextInputType.number,
                     ),
@@ -505,7 +474,7 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
                     child: _field(
                       controller: txtusersubmit,
                       focusNode: usersubmitid,
-                      label: tr('userId'),
+                      label: 'UserID',
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -513,7 +482,7 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
                     child: _field(
                       controller: txtstatus,
                       focusNode: statusid,
-                      label: tr('status'),
+                      label: 'Status',
                       readOnly: true,
                       fillColor: _boxColor,
                     ),
@@ -527,25 +496,23 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
               Wrap(
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  _radioOption(
-                      "OK", group_OK_NG2, tr('judgmentOK'), checkRadio2),
-                  _radioOption(
-                      "NG", group_OK_NG2, tr('judgmentNG'), checkRadio2),
+                  _radioOption("OK", group_OK_NG2, "Judgment OK", checkRadio2),
+                  _radioOption("NG", group_OK_NG2, "Judment NG", checkRadio2),
                 ],
               ),
 
               const SizedBox(height: 5),
 
-              // --- Buttons ---
+              // --- Buttons: nut nho, tren 1 hang ---
               Row(
                 children: [
-                  Expanded(
-                      child: _smallButton(tr('submit'), _onSubmitPressed)),
+                  Expanded(child: _smallButton('Submit', _onSubmitPressed)),
                   const SizedBox(width: 4),
-                  Expanded(child: _smallButton(tr('clear'), reset)),
+                  Expanded(child: _smallButton('Clear', reset)),
                   const SizedBox(width: 4),
                   Expanded(
-                    child: _smallButton(tr('exit'), () {
+                    child: _smallButton('Exit', () {
+                      // Quay lai IQC Menu dang co san trong stack
                       Navigator.of(context).pop();
                     }),
                   ),
@@ -575,7 +542,7 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
 
       final row = _firstRow(dtcompare);
       if (row == null) {
-        _boxError(tr('msgCheckBoxCard', {'n': '2'}));
+        _boxError("Kiểm tra lại thông tin box card 2!");
         return;
       }
 
@@ -584,15 +551,16 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
           txtrecheck.text = "";
           safeRequestFocus(recheckid);
         } else {
+          // neu khong insert 1 nam
           safeRequestFocus(usersubmitid);
         }
         hideKeyboard();
       } else {
-        _boxError(tr('msgCheckBoxCard', {'n': '1'}));
+        _boxError("Kiểm tra lại thông tin box card 1!");
       }
     } catch (e) {
       Closepending();
-      thongbaoNG(tr('error', {'e': e.toString()}));
+      thongbaoNG(e.toString());
     }
   }
 
@@ -632,23 +600,24 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
       final String user_check_rohs =
       ketqua_rohs == "" ? txtusersubmit.text : "";
 
+      // vua lay hang, vua tra hang va danh gia luon
       final String check1lan =
       (trangthai_TTcheck == "waiting" && group_OK_NG2 != "") ? "1" : "0";
 
       if (txtusersubmit.text == "") {
-        thongbaoNG(tr('msgQcUserEmpty'));
+        thongbaoNG("Người kiểm tra QC không được trống!");
         txtusersubmit.text = "";
         safeRequestFocus(usersubmitid);
         return;
       }
       if (LotQty.toString() == "0") {
-        thongbaoNG(tr('msgLotQtyZero'));
+        thongbaoNG("số lượng lô = 0, Bạn check lại thông tin!");
         txtrecheck.text = "";
         safeRequestFocus(recheckid);
         return;
       }
       if (checkunit == true && txtbox.text == "") {
-        thongbaoNG(tr('msgMustScanBox'));
+        thongbaoNG("Hàng này bắt buộc phai scan box!");
         safeRequestFocus(boxid);
         return;
       }
@@ -656,7 +625,7 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
       if (isinsert == true && trangthai_TTcheck != "checked") {
         // ===== insert hang 1 nam va lay hang =====
         if (txtrecheck.text.trim() == "" || _toDouble(txtrecheck.text) == 0) {
-          thongbaoNG(tr('msgNoRecheckQty'));
+          thongbaoNG("Bạn chưa nhập số lượng Recheck!");
           txtrecheck.text = "";
           safeRequestFocus(recheckid);
           return;
@@ -667,11 +636,12 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
         Openpeding();
         final List<Map<String, dynamic>> dtrecheck;
         if (check1lan == "1") {
+          // vua lay hang => vua danh gia OK/NG 1 lan luon
           dtrecheck = await Query_insert_recheck6(
-            Barcodeid,
-            txtScan.text.toString().trim(),
-            "Hang1Nam",
-            txtrecheck.text,
+            Barcodeid, // chuoibarcode
+            txtScan.text.toString().trim(), // mahang
+            "Hang1Nam", // vitri_new
+            txtrecheck.text, // soluonglot
             lblplant,
             lbldeliverydate,
             lbldano,
@@ -684,13 +654,13 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
             lblCateQC,
             invoice_,
             IDmahang,
-            "",
+            "", // codate_new
             remark_new,
-            userId,
+            userId, // createuser
             typerecheck,
             typecheck,
-            txtusersubmit.text,
-            group_OK_NG2,
+            txtusersubmit.text, // usercheck
+            group_OK_NG2, // kequacheck
           );
         } else {
           dtrecheck = await Query_insert_recheck4(
@@ -723,63 +693,51 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
 
         final row = _firstRow(dtrecheck);
         if (row == null) {
-          thongbaoNG(tr('msgSystemNG1'));
+          thongbaoNG("NG, He thong, lien he IT1!");
         } else if (_cell(row, 0) == "1") {
-          thongbaoOK(tr('msgPickupDone'));
+          thongbaoOK("Hoàn thành trang thái lấy hàng!");
           reset();
         } else {
-          thongbaoNG(tr('msgNotJudgedYet'));
+          // kequa == "4" lo chua duoc danh gia
+          thongbaoNG("Lô hàng chưa được đánh giá OK/NG lần nào!");
         }
       } else {
         // ===== submit binh thuong =====
         Openpeding();
         final List<Map<String, dynamic>> dtupdate =
         await Query_update_check_QC_1nam(
-            ID,
-            codate,
-            remark,
-            soluonghuy_spl,
-            soluonghuy_rohs,
-            user_finished_spl,
-            user_finished_rohs,
-            user_check_spl,
-            user_check_rohs,
-            ketqua_spl,
-            ketqua_rohs,
-            kieucheck,
-            user_dangnhap,
-            trangthai_check_sql,
-            trangthai_check_rohs,
-            trangthai_TTcheck,
-            invoice_,
-            SLNG,
-            typerecheck,
-            check1lan);
+            ID, codate, remark, soluonghuy_spl, soluonghuy_rohs,
+            user_finished_spl, user_finished_rohs, user_check_spl,
+            user_check_rohs, ketqua_spl, ketqua_rohs, kieucheck,
+            user_dangnhap, trangthai_check_sql, trangthai_check_rohs,
+            trangthai_TTcheck, invoice_, SLNG, typerecheck, check1lan);
         if (!mounted) return;
         Closepending();
 
         final row = _firstRow(dtupdate);
         if (row == null) {
-          thongbaoNG(tr('msgSystemNG'));
+          thongbaoNG("NG, He thong, lien he IT!");
           return;
         }
 
         final String kequa = _cell(row, 0);
         if (kequa == "1") {
-          thongbaoOK(tr('msgPickupDone'));
+          thongbaoOK("Hoàn thành trang thái lấy hàng!");
           reset();
         } else if (kequa == "3") {
-          thongbaoNG(tr('msgNoPermission'));
+          thongbaoNG("Bạn không có quyền sửa kết quả kiểm tra!");
         } else {
+          // kequa == "2"
           await function_auto_rohs_NG(SLNG);
         }
       }
     } catch (e) {
       Closepending();
-      thongbaoNG(tr('msgTryCatch', {'e': e.toString()}));
+      thongbaoNG("loi try cach: $e");
     }
   }
 
+  /// Tru kho MCS, hien thong bao va reset khi co ket qua.
   Future<void> _truKhoMCS(String qty) async {
     final List<Map<String, dynamic>> dtkq =
     await Auto_Sap_rohs_Iqc_new(Barcodeid, txtbox.text.toString(), qty);
@@ -787,16 +745,16 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
     final row = _firstRow(dtkq);
     if (row == null) return;
     if (_cell(row, 0) != '0') {
-      thongbaoOK(tr('msgCheckSuccess'));
+      thongbaoOK("Kiểm tra hàng thành công!");
     } else {
-      thongbaoOK(tr('msgCheckSuccessNoMCS'));
+      thongbaoOK("Kiểm tra hàng thành công! Chưa trừ kho MCS");
     }
     reset();
   }
 
   Future<void> _xuLyNGAllLot(String SLNG) async {
-    final int? NGallLot =
-    await showdialognotify(tr('msgConfirmNGAllLot'));
+    final int? NGallLot = await showdialognotify(
+        "Bạn xác nhận trường hợp này có phải đánh giá All LOT không?");
     if (!mounted || NGallLot != 1) return;
 
     final List<Map<String, dynamic>> dtkq = await Auto_Sap_rohs_Iqc_NG(
@@ -805,9 +763,9 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
     final row = _firstRow(dtkq);
     if (row == null) return;
     if (_cell(row, 0) != '0') {
-      thongbaoOK(tr('msgCheckSuccess'));
+      thongbaoOK("Kiểm tra hàng thành công!");
     } else {
-      thongbaoOK(tr('msgCheckSuccessNoMCS'));
+      thongbaoOK("Kiểm tra hàng thành công! Chưa trừ kho MCS");
     }
     reset();
   }
@@ -821,15 +779,17 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
     final double lotQtyNum = _toDouble(LotQty);
 
     if (slngNum > 0 && slngNum > lotQtyNum) {
+      // danh gia NG ca Lot
       await _xuLyNGAllLot(SLNG);
     } else if (qtyRoshNum > 0 && slngNum > 0) {
+      // tru ca 2
       await _truKhoMCS((qtyRoshNum + slngNum).toString());
     } else if (qtyRoshNum > 0) {
       await _truKhoMCS(qtyRosh);
     } else if (slngNum > 0) {
       await _truKhoMCS(SLNG);
     } else {
-      thongbaoOK(tr('msgCheckSuccess'));
+      thongbaoOK("Kiểm tra hàng thành công!");
       reset();
     }
   }
@@ -846,18 +806,20 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
 
       final row = _firstRow(dtinfor);
       if (row == null || _cell(row, 0) == '0') {
+        // chua co trong freelocation => lay tu receiving card
         await Input_Data_IQC(chuoibarcode, dtinfor);
         return;
       }
 
       final String mahang = _cell(row, 0);
 
+      // check hang unit box
       final List<Map<String, dynamic>> dtcheckunit =
       await Query_CheckUnitbox(chuoibarcode.toString());
       if (!mounted) return;
       final unitRow = _firstRow(dtcheckunit);
       if (unitRow != null && _cell(unitRow, 0) == '1') {
-        checkunit = true;
+        checkunit = true; // hang unit box => bat buoc scan box
       }
 
       final String invoice = _cell(row, 1);
@@ -897,6 +859,7 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
         LotQty = soluonglot;
         IDmahang = _IDmahang;
 
+        // luu lai thong tin de dung khi insert hang 1 nam
         lbldeliverydate = deliverydate;
         lblplant = plant;
         lbldano = dano;
@@ -946,7 +909,7 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
       }
     } catch (e) {
       Closepending();
-      thongbaoNG(tr('error', {'e': e.toString()}));
+      thongbaoNG(e.toString());
     }
   }
 
@@ -955,13 +918,12 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
     setState(() => Barcodeid = chuoibarcode.toString());
 
     final List<Map<String, dynamic>> dtrcheck =
-    await Query_thongtinreceivingcard(
-        chuoibarcode.toString(), _typerecheck);
+    await Query_thongtinreceivingcard(chuoibarcode.toString(), _typerecheck);
     if (!mounted) return;
 
     final row = _firstRow(dtrcheck);
     if (row == null || _cell(row, 0) == '0') {
-      thongbaoNG(tr('msgNotInSystem1Nam'));
+      thongbaoNG("Hàng không có trong hệ thống(1nam)!, liên hệ IT!");
       txtScan.text = "";
       safeRequestFocus(scanid);
       return;
@@ -1039,14 +1001,14 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
   void recheckid_function(String soluonginput) {
     if (soluonginput.trim().isEmpty ||
         double.tryParse(soluonginput.trim()) == null) {
-      thongbaoNG(tr('msgNoLotQty'));
+      thongbaoNG("Bạn chưa nhập số lượng lô!");
       txtrecheck.text = "";
       safeRequestFocus(recheckid);
       return;
     }
 
     if (_toDouble(soluonginput) > _toDouble(LotQty)) {
-      thongbaoNG(tr('msgQtyOverLot'));
+      thongbaoNG("Số lượng nhập vào lớn hơn so lượng lot ban đầu!");
       txtrecheck.text = "";
       safeRequestFocus(recheckid);
       return;
@@ -1097,13 +1059,13 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return AlertDialog(
+        return const AlertDialog(
           content: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const CircularProgressIndicator(),
-              const SizedBox(width: 10),
-              Text(tr('loading')),
+              CircularProgressIndicator(),
+              SizedBox(width: 10),
+              Text('Loading...'),
             ],
           ),
         );
@@ -1112,6 +1074,7 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
   }
 
   void Closepending() {
+    // Chi dong khi dialog Loading dang mo, tranh pop nham ca man hinh.
     if (!mounted || !_isLoading) return;
     _isLoading = false;
     Navigator.of(context, rootNavigator: true).pop();
@@ -1124,17 +1087,17 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(tr('notify')),
+          title: const Text('Notify'),
           content: SingleChildScrollView(
             child: ListBody(children: <Widget>[Text(notify)]),
           ),
           actions: <Widget>[
             TextButton(
-              child: Text(tr('yes')),
+              child: const Text('Yes'),
               onPressed: () => Navigator.of(context).pop(1),
             ),
             TextButton(
-              child: Text(tr('no')),
+              child: const Text('No'),
               onPressed: () => Navigator.of(context).pop(0),
             ),
           ],

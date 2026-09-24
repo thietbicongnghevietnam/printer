@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../ControllerAPI/api_IQC.dart';
 import '../ModelUI/class_api_IQC.dart';
 import '../di/di.dart';
-import '../l10n/app_lang.dart';
 import '../repositories/auth_repository.dart';
 
 class StatusInspection extends StatefulWidget {
@@ -75,22 +75,36 @@ class _ExampleWidgetState extends State<StatusInspection> {
 
   // ==================== HELPERS ====================
 
+  /// Lay gia tri cot an toan: null / vuot index => ''.
   String _cell(List<dynamic> row, int index) {
     if (index < 0 || index >= row.length) return '';
     final v = row[index];
     return v == null ? '' : v.toString();
   }
 
+  /// Lay dong dau tien cua ket qua API, rong => null.
   List<dynamic>? _firstRow(List<Map<String, dynamic>> dt) =>
       dt.isEmpty ? null : dt[0].values.toList();
 
+  /// Danh sach ten loai recheck, bo trung lap.
   List<String> get _dropItems => Rechecklist
       .map((e) => e.NameRecheck.toString())
       .where((e) => e.isNotEmpty)
       .toSet()
       .toList();
 
+  // Future<void> autogetuser() async {
+  //   final SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   if (!mounted) return;
+  //   setState(() async {
+  //     //userId = prefs.getString('username') ?? '';
+  //     userId = await getIt<AuthRepository>().getUserID();
+  //   });
+  // }
+
   Future<void> autogetuser() async {
+    // final SharedPreferences prefs = await SharedPreferences.getInstance();
+    // final id = prefs.getString('username') ?? '';
     final id = await getIt<AuthRepository>().getUserID();
     print(id);
 
@@ -100,22 +114,9 @@ class _ExampleWidgetState extends State<StatusInspection> {
     });
   }
 
-  // ==================== NGON NGU ====================
-
-  void _onLangChanged() {
-    if (!mounted) return;
-    // Tinh lai trang thai de cap nhat chu "Checking" / "Waiting" / "NA"
-    setState(() {
-      _tinhTrangThaiSPL();
-      _tinhTrangThaiROHS();
-    });
-  }
-
   @override
   void initState() {
     super.initState();
-    LangController.current.addListener(_onLangChanged);
-    LangController.load();
     autogetuser();
     hideKeyboard();
     tally_get_recheck();
@@ -146,7 +147,7 @@ class _ExampleWidgetState extends State<StatusInspection> {
 
     if (ParallelStatus == "1" && ParallelStatus2 == "0") {
       color = Colors.greenAccent; // checking
-      text = tr('statusChecking');
+      text = "Checking";
     } else if (ParallelStatus == "1" && ParallelStatus2 == "1" && t == "OK") {
       color = Colors.green; // finished OK
     } else if (ParallelStatus == "1" && ParallelStatus2 == "1" && t == "NG") {
@@ -157,12 +158,12 @@ class _ExampleWidgetState extends State<StatusInspection> {
       color = Colors.green; // non inspection OK
     } else if (lblCateQC == '3' || (lblCateQC == '0' && t == 'NULL')) {
       color = Colors.white70;
-      text = tr('statusNA');
+      text = "NA";
     } else if ((lblCateQC == '1' || lblCateQC == '2') &&
         ParallelStatus == "0" &&
         ParallelStatus2 == "0") {
       color = Colors.yellow;
-      text = tr('statusWaiting');
+      text = "Waiting";
     }
 
     _boxColor2 = color;
@@ -177,7 +178,7 @@ class _ExampleWidgetState extends State<StatusInspection> {
 
     if (ParallelStatus3 == "1" && ParallelStatus4 == "0") {
       color = Colors.greenAccent; // checking
-      text = tr('statusChecking');
+      text = "Checking";
     } else if (ParallelStatus3 == "1" && ParallelStatus4 == "1" && t == "OK") {
       color = Colors.green;
     } else if (ParallelStatus3 == "1" && ParallelStatus4 == "1" && t == "NG") {
@@ -188,12 +189,12 @@ class _ExampleWidgetState extends State<StatusInspection> {
       color = Colors.green;
     } else if (lblCateQC == '1' || lblCateQC == '0') {
       color = Colors.white70;
-      text = tr('statusNA');
+      text = "NA";
     } else if ((lblCateQC == '2' || lblCateQC == '3') &&
         ParallelStatus3 == "0" &&
         ParallelStatus4 == "0") {
       color = Colors.yellow;
-      text = tr('statusWaiting');
+      text = "Waiting";
     }
 
     _boxColor3 = color;
@@ -202,9 +203,9 @@ class _ExampleWidgetState extends State<StatusInspection> {
 
   @override
   void dispose() {
-    LangController.current.removeListener(_onLangChanged);
     txtScan.dispose();
     scanid.dispose();
+    // super.dispose() phai goi CUOI CUNG
     super.dispose();
   }
 
@@ -217,37 +218,7 @@ class _ExampleWidgetState extends State<StatusInspection> {
 
   // ==================== UI WIDGETS ====================
 
-  Widget _languageButton() {
-    return PopupMenuButton<AppLang>(
-      tooltip: tr('language'),
-      initialValue: LangController.current.value,
-      onSelected: (lang) => LangController.set(lang),
-      itemBuilder: (_) => const [
-        PopupMenuItem(value: AppLang.vi, child: Text('🇻🇳  Tiếng Việt')),
-        PopupMenuItem(value: AppLang.en, child: Text('🇬🇧  English')),
-        PopupMenuItem(value: AppLang.ja, child: Text('🇯🇵  日本語')),
-      ],
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.language),
-            const SizedBox(width: 4),
-            Text(
-              switch (LangController.current.value) {
-                AppLang.vi => 'VI',
-                AppLang.en => 'EN',
-                AppLang.ja => 'JA',
-              },
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
+  /// O hien thi thong tin (chi doc), co nhan giong TextField.
   Widget _infoBox(String label, String value, {Color? fillColor}) {
     return SizedBox(
       height: 50,
@@ -299,18 +270,17 @@ class _ExampleWidgetState extends State<StatusInspection> {
     return SizedBox(
       height: 50,
       child: InputDecorator(
-        decoration: InputDecoration(
-          border: const OutlineInputBorder(),
-          labelText: tr('type'),
-          contentPadding:
-          const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: const InputDecoration(
+          border: OutlineInputBorder(),
+          labelText: 'Type',
+          contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         ),
         child: DropdownButtonHideUnderline(
           child: DropdownButton<String>(
             isExpanded: true,
             isDense: true,
             value: currentValue,
-            hint: Text(tr('type')),
+            hint: const Text('Type'),
             items: items
                 .map((name) => DropdownMenuItem<String>(
               value: name,
@@ -336,8 +306,7 @@ class _ExampleWidgetState extends State<StatusInspection> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr('statusTitle')),
-        actions: [_languageButton()],
+        title: const Text('Status Inspection IQC'),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -357,11 +326,11 @@ class _ExampleWidgetState extends State<StatusInspection> {
                         controller: txtScan,
                         focusNode: scanid,
                         showCursor: true,
-                        decoration: InputDecoration(
-                          border: const OutlineInputBorder(),
-                          labelText: tr('scanReceivingCard'),
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 12),
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
+                          labelText: 'Scan RecevingCard',
+                          contentPadding:
+                          EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                         ),
                         onSubmitted: scanid_function,
                       ),
@@ -375,20 +344,19 @@ class _ExampleWidgetState extends State<StatusInspection> {
               const SizedBox(height: 8),
 
               // --- Material ---
-              _infoBox(tr('material'), lblmaterial),
+              _infoBox('Material', lblmaterial),
 
               const SizedBox(height: 8),
 
               // --- Invoice / Scrap SPL ---
               Row(
                 children: [
-                  Expanded(
-                      flex: 3, child: _infoBox(tr('invoice'), lblinvoice)),
+                  Expanded(flex: 3, child: _infoBox('Invoice', lblinvoice)),
                   const SizedBox(width: 8),
                   Expanded(
                     flex: 2,
                     child: _infoBox(
-                        tr('scrapSPL'), lblhuyspl.isEmpty ? '0' : lblhuyspl),
+                        'Scrap SPL', lblhuyspl.isEmpty ? '0' : lblhuyspl),
                   ),
                 ],
               ),
@@ -398,14 +366,12 @@ class _ExampleWidgetState extends State<StatusInspection> {
               // --- Date / Scrap Rohs ---
               Row(
                 children: [
-                  Expanded(
-                      flex: 3,
-                      child: _infoBox(tr('date'), lblincomingdate)),
+                  Expanded(flex: 3, child: _infoBox('Date', lblincomingdate)),
                   const SizedBox(width: 8),
                   Expanded(
                     flex: 2,
                     child: _infoBox(
-                        tr('scrapRohs'), lblhuyrohs.isEmpty ? '0' : lblhuyrohs),
+                        'Scrap Rohs', lblhuyrohs.isEmpty ? '0' : lblhuyrohs),
                   ),
                 ],
               ),
@@ -415,11 +381,9 @@ class _ExampleWidgetState extends State<StatusInspection> {
               // --- Location / Qty Lot ---
               Row(
                 children: [
-                  Expanded(
-                      flex: 3, child: _infoBox(tr('location'), lblvitri)),
+                  Expanded(flex: 3, child: _infoBox('Location', lblvitri)),
                   const SizedBox(width: 8),
-                  Expanded(
-                      flex: 2, child: _infoBox(tr('qtyLot'), lblLotQty)),
+                  Expanded(flex: 2, child: _infoBox('Qty Lot', lblLotQty)),
                 ],
               ),
 
@@ -428,11 +392,9 @@ class _ExampleWidgetState extends State<StatusInspection> {
               // --- Code date / CtrlKey ---
               Row(
                 children: [
-                  Expanded(
-                      flex: 3, child: _infoBox(tr('codeDate'), lblcodate)),
+                  Expanded(flex: 3, child: _infoBox('Code date', lblcodate)),
                   const SizedBox(width: 8),
-                  Expanded(
-                      flex: 2, child: _infoBox(tr('ctrlKey'), lblCtrlkey)),
+                  Expanded(flex: 2, child: _infoBox('CtrlKey', lblCtrlkey)),
                 ],
               ),
 
@@ -441,10 +403,9 @@ class _ExampleWidgetState extends State<StatusInspection> {
               // --- Remark / CtrlT ---
               Row(
                 children: [
-                  Expanded(
-                      flex: 3, child: _infoBox(tr('remark'), lblremark)),
+                  Expanded(flex: 3, child: _infoBox('Remark', lblremark)),
                   const SizedBox(width: 8),
-                  Expanded(flex: 2, child: _infoBox(tr('ctrlT'), lblCtrlT)),
+                  Expanded(flex: 2, child: _infoBox('CtrlT', lblCtrlT)),
                 ],
               ),
 
@@ -454,12 +415,12 @@ class _ExampleWidgetState extends State<StatusInspection> {
               Row(
                 children: [
                   Expanded(
-                    child: _infoBox(tr('sample'), txtSPLStatus,
+                    child: _infoBox('Sample', txtSPLStatus,
                         fillColor: _boxColor2),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: _infoBox(tr('rohs'), txtROHSStatus,
+                    child: _infoBox('ROHS', txtROHSStatus,
                         fillColor: _boxColor3),
                   ),
                 ],
@@ -467,13 +428,14 @@ class _ExampleWidgetState extends State<StatusInspection> {
 
               const SizedBox(height: 10),
 
-              // --- Buttons ---
+              // --- Buttons: nut nho, tren 1 hang ---
               Row(
                 children: [
-                  Expanded(child: _smallButton(tr('clear'), reset)),
+                  Expanded(child: _smallButton('Clear', reset)),
                   const SizedBox(width: 4),
                   Expanded(
-                    child: _smallButton(tr('exit'), () {
+                    child: _smallButton('Exit', () {
+                      // Quay lai IQC Menu dang co san trong stack
                       Navigator.of(context).pop();
                     }),
                   ),
@@ -500,14 +462,14 @@ class _ExampleWidgetState extends State<StatusInspection> {
 
       final row = _firstRow(dtinfor);
       if (row == null) {
-        thongbaoNG(tr('msgNoDataInIQC'));
+        thongbaoNG("Chưa có dữ liệu trong IQC, kiểm tra lại!");
         reset();
         return;
       }
 
       final String mahang = _cell(row, 0);
       if (mahang == '0') {
-        thongbaoNG(tr('msgNoDataInIQC2'));
+        thongbaoNG("Chưa có dữ liệu trong IQC! kiểm tra lại!");
         txtScan.text = "";
         safeRequestFocus(scanid);
         return;
@@ -565,7 +527,7 @@ class _ExampleWidgetState extends State<StatusInspection> {
       hideKeyboard();
     } catch (e) {
       Closepending();
-      thongbaoNG(tr('error', {'e': e.toString()}));
+      thongbaoNG(e.toString());
       reset();
     }
   }
@@ -609,13 +571,13 @@ class _ExampleWidgetState extends State<StatusInspection> {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return AlertDialog(
+        return const AlertDialog(
           content: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const CircularProgressIndicator(),
-              const SizedBox(width: 10),
-              Text(tr('loading')),
+              CircularProgressIndicator(),
+              SizedBox(width: 10),
+              Text('Loading...'),
             ],
           ),
         );
@@ -624,6 +586,7 @@ class _ExampleWidgetState extends State<StatusInspection> {
   }
 
   void Closepending() {
+    // Chi dong khi dialog Loading dang mo, tranh pop nham ca man hinh.
     if (!mounted || !_isLoading) return;
     _isLoading = false;
     Navigator.of(context, rootNavigator: true).pop();

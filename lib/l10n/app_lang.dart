@@ -134,6 +134,141 @@ const Map<String, Map<AppLang, String>> _strings = {
 
   // ---------- end RecheckInspection ----------
 
+  // ---------- Man hinh Hang1NamInspection ----------
+  'hang1NamTitle': {
+    AppLang.vi: 'Kiểm tra hàng quá 1 năm IQC',
+    AppLang.en: 'More 1 Year Inspection IQC',
+    AppLang.ja: '1年以上経過品検査 IQC',
+  },
+  'insert1Year': {
+    AppLang.vi: 'Thêm hàng 1 năm',
+    AppLang.en: 'Insert 1Year',
+    AppLang.ja: '1年品を追加',
+  },
+  'location': {
+    AppLang.vi: 'Vị trí',
+    AppLang.en: 'Location',
+    AppLang.ja: '位置',
+  },
+  'qtyLot': {
+    AppLang.vi: 'SL lô',
+    AppLang.en: 'Qty Lot',
+    AppLang.ja: 'ロット数量',
+  },
+  'clear': {
+    AppLang.vi: 'Làm mới',
+    AppLang.en: 'Clear',
+    AppLang.ja: 'クリア',
+  },
+  'msgNotInSystem1Nam': {
+    AppLang.vi: 'Hàng không có trong hệ thống (1 năm)!, liên hệ IT!',
+    AppLang.en: 'Item not found in the system (1 year)! Please contact IT!',
+    AppLang.ja: 'システムに品目が見つかりません（1年）！ITに連絡してください！',
+  },
+  'msgSystemNG1': {
+    AppLang.vi: 'NG, Hệ thống, liên hệ IT1!',
+    AppLang.en: 'NG, system error, please contact IT1!',
+    AppLang.ja: 'NG、システムエラー、IT1に連絡してください！',
+  },
+  'msgTryCatch': {
+    AppLang.vi: 'Lỗi try catch: {e}',
+    AppLang.en: 'Error try catch: {e}',
+    AppLang.ja: 'エラー try catch: {e}',
+  },
+  // ---------- end hang 1 nam ----------
+
+  // ---------- Man hinh StatusInspection ----------
+  'statusTitle': {
+    AppLang.vi: 'Trạng thái kiểm tra IQC',
+    AppLang.en: 'Status Inspection IQC',
+    AppLang.ja: 'IQC検査ステータス',
+  },
+  'type': {
+    AppLang.vi: 'Loại',
+    AppLang.en: 'Type',
+    AppLang.ja: 'タイプ',
+  },
+  'material': {
+    AppLang.vi: 'Mã hàng',
+    AppLang.en: 'Material',
+    AppLang.ja: '品目',
+  },
+  'scrapSPL': {
+    AppLang.vi: 'SL hủy SPL',
+    AppLang.en: 'Scrap SPL',
+    AppLang.ja: '廃棄数量 SPL',
+  },
+  'scrapRohs': {
+    AppLang.vi: 'SL hủy RoHS',
+    AppLang.en: 'Scrap Rohs',
+    AppLang.ja: '廃棄数量 RoHS',
+  },
+  'sample': {
+    AppLang.vi: 'Mẫu',
+    AppLang.en: 'Sample',
+    AppLang.ja: 'サンプル',
+  },
+  'rohs': {
+    AppLang.vi: 'RoHS',
+    AppLang.en: 'ROHS',
+    AppLang.ja: 'RoHS',
+  },
+  'statusChecking': {
+    AppLang.vi: 'Đang kiểm',
+    AppLang.en: 'Checking',
+    AppLang.ja: '検査中',
+  },
+  'statusWaiting': {
+    AppLang.vi: 'Chờ',
+    AppLang.en: 'Waiting',
+    AppLang.ja: '待機',
+  },
+  'statusNA': {
+    AppLang.vi: 'Không áp dụng',
+    AppLang.en: 'NA',
+    AppLang.ja: '該当',
+  },
+  'msgNoDataInIQC': {
+    AppLang.vi: 'Chưa có dữ liệu trong IQC, kiểm tra lại!',
+    AppLang.en: 'No data in IQC yet, please check again!',
+    AppLang.ja: 'IQCにデータがありません。確認してください！',
+  },
+  'msgNoDataInIQC2': {
+    AppLang.vi: 'Chưa có dữ liệu trong IQC! kiểm tra lại!',
+    AppLang.en: 'No data in IQC! Please check again!',
+    AppLang.ja: 'IQCにデータがありません！確認してください！',
+  },
+ // ---------- end status inspection ----------
+
+  // ---------- Man hinh Findlocation ----------
+  'findLocationTitle': {
+    AppLang.vi: 'Tìm vị trí hàng nhanh',
+    AppLang.en: 'Find material quickly',
+    AppLang.ja: '品目位置のクイック検索',
+  },
+  'deliveryDate': {
+    AppLang.vi: 'Ngày giao',
+    AppLang.en: 'DeliveryDate',
+    AppLang.ja: '納入日',
+  },
+  'vender': {
+    AppLang.vi: 'Nhà cung cấp',
+    AppLang.en: 'Vender',
+    AppLang.ja: '仕入先',
+  },
+  'locationCount': {
+    AppLang.vi: 'Vị trí ({n})',
+    AppLang.en: 'Location ({n})',
+    AppLang.ja: '位置 ({n})',
+  },
+  'msgCheckDataContactIT': {
+    AppLang.vi: 'Kiểm tra lại dữ liệu, liên hệ IT!',
+    AppLang.en: 'Please check the data and contact IT!',
+    AppLang.ja: 'データを確認し、ITに連絡してください！',
+  },
+
+  // ---------- end findlocation ----------
+
   // ---------- Man hinh IQC ----------
   'iqcTitle': {
     AppLang.vi: 'Kiểm tra IQC',

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../ControllerAPI/api_IQC.dart';
 import '../di/di.dart';
-import '../l10n/app_lang.dart';
 import '../repositories/auth_repository.dart';
 
 class Findlocation extends StatefulWidget {
@@ -34,9 +34,21 @@ class _ExampleWidgetState extends State<Findlocation> {
 
   // ==================== HELPERS ====================
 
+  /// Chuyen gia tri bat ky sang String, null => ''.
   String _str(dynamic v) => v == null ? '' : v.toString();
 
+  // Future<void> autogetuser() async {
+  //   final SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   if (!mounted) return;
+  //   setState(() async {
+  //     //userId = prefs.getString('username') ?? '';
+  //     userId = await getIt<AuthRepository>().getUserID();
+  //   });
+  // }
+
   Future<void> autogetuser() async {
+    // final SharedPreferences prefs = await SharedPreferences.getInstance();
+    // final id = prefs.getString('username') ?? '';
     final id = await getIt<AuthRepository>().getUserID();
     print(id);
 
@@ -46,18 +58,9 @@ class _ExampleWidgetState extends State<Findlocation> {
     });
   }
 
-  // ==================== NGON NGU ====================
-
-  void _onLangChanged() {
-    if (!mounted) return;
-    setState(() {});
-  }
-
   @override
   void initState() {
     super.initState();
-    LangController.current.addListener(_onLangChanged);
-    LangController.load();
     autogetuser();
     hideKeyboard();
   }
@@ -69,9 +72,9 @@ class _ExampleWidgetState extends State<Findlocation> {
 
   @override
   void dispose() {
-    LangController.current.removeListener(_onLangChanged);
     txtScan.dispose();
     scanid.dispose();
+    // super.dispose() phai goi CUOI CUNG
     super.dispose();
   }
 
@@ -84,37 +87,7 @@ class _ExampleWidgetState extends State<Findlocation> {
 
   // ==================== UI WIDGETS ====================
 
-  Widget _languageButton() {
-    return PopupMenuButton<AppLang>(
-      tooltip: tr('language'),
-      initialValue: LangController.current.value,
-      onSelected: (lang) => LangController.set(lang),
-      itemBuilder: (_) => const [
-        PopupMenuItem(value: AppLang.vi, child: Text('🇻🇳  Tiếng Việt')),
-        PopupMenuItem(value: AppLang.en, child: Text('🇬🇧  English')),
-        PopupMenuItem(value: AppLang.ja, child: Text('🇯🇵  日本語')),
-      ],
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.language),
-            const SizedBox(width: 4),
-            Text(
-              switch (LangController.current.value) {
-                AppLang.vi => 'VI',
-                AppLang.en => 'EN',
-                AppLang.ja => 'JA',
-              },
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
+  /// O hien thi thong tin (chi doc), co nhan giong TextField.
   Widget _infoBox(String label, String value) {
     return SizedBox(
       height: 50,
@@ -143,8 +116,8 @@ class _ExampleWidgetState extends State<Findlocation> {
       decoration: InputDecoration(
         border: const OutlineInputBorder(),
         labelText: locations.isEmpty
-            ? tr('location')
-            : tr('locationCount', {'n': '${locations.length}'}),
+            ? 'Location'
+            : 'Location (${locations.length})',
         contentPadding: const EdgeInsets.fromLTRB(8, 14, 8, 10),
       ),
       child: locations.isEmpty
@@ -201,8 +174,7 @@ class _ExampleWidgetState extends State<Findlocation> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(tr('findLocationTitle')),
-        actions: [_languageButton()],
+        title: const Text('Find material quickly'),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -218,44 +190,45 @@ class _ExampleWidgetState extends State<Findlocation> {
                   controller: txtScan,
                   focusNode: scanid,
                   showCursor: true,
-                  decoration: InputDecoration(
-                    border: const OutlineInputBorder(),
-                    labelText: tr('scanReceivingCard'),
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 12),
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Scan RecevingCard',
+                    contentPadding:
+                    EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                   ),
                   onSubmitted: scanid_function,
                 ),
               ),
 
               const SizedBox(height: 8),
-              _infoBox(tr('material'), lblmaterial),
+              _infoBox('Material', lblmaterial),
 
               const SizedBox(height: 8),
               Row(
                 children: [
                   Expanded(
-                      child: _infoBox(tr('deliveryDate'), lbldeliverydate)),
+                      child: _infoBox('DeliveryDate', lbldeliverydate)),
                   const SizedBox(width: 8),
-                  Expanded(child: _infoBox(tr('invoice'), lblinvoice)),
+                  Expanded(child: _infoBox('Invoice', lblinvoice)),
                 ],
               ),
 
               const SizedBox(height: 8),
-              _infoBox(tr('vender'), lblvender),
+              _infoBox('Vender', lblvender),
 
               const SizedBox(height: 8),
               _locationBox(),
 
               const SizedBox(height: 16),
 
-              // --- Buttons ---
+              // --- Buttons: nut nho, tren 1 hang ---
               Row(
                 children: [
-                  Expanded(child: _smallButton(tr('clear'), reset)),
+                  Expanded(child: _smallButton('Clear', reset)),
                   const SizedBox(width: 4),
                   Expanded(
-                    child: _smallButton(tr('exit'), () {
+                    child: _smallButton('Exit', () {
+                      // Quay lai IQC Menu dang co san trong stack
                       Navigator.of(context).pop();
                     }),
                   ),
@@ -285,14 +258,14 @@ class _ExampleWidgetState extends State<Findlocation> {
       Closepending();
 
       if (dtinfor.isEmpty) {
-        _scanError(tr('msgNoDataInIQC'));
+        _scanError("Chưa có dữ liệu trong IQC, kiểm tra lại!");
         return;
       }
 
       final firstValues = dtinfor[0].values.toList();
       final String mahang = firstValues.isEmpty ? '' : _str(firstValues[0]);
       if (mahang == '0') {
-        _scanError(tr('msgCheckDataContactIT'));
+        _scanError("Kiểm tra lại dữ liệu, liên hệ IT!");
         return;
       }
 
@@ -333,7 +306,7 @@ class _ExampleWidgetState extends State<Findlocation> {
       hideKeyboard();
     } catch (e) {
       Closepending();
-      thongbaoNG(tr('error', {'e': e.toString()}));
+      thongbaoNG(e.toString());
     }
   }
 
@@ -376,13 +349,13 @@ class _ExampleWidgetState extends State<Findlocation> {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return AlertDialog(
+        return const AlertDialog(
           content: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const CircularProgressIndicator(),
-              const SizedBox(width: 10),
-              Text(tr('loading')),
+              CircularProgressIndicator(),
+              SizedBox(width: 10),
+              Text('Loading...'),
             ],
           ),
         );
@@ -391,6 +364,7 @@ class _ExampleWidgetState extends State<Findlocation> {
   }
 
   void Closepending() {
+    // Chi dong khi dialog Loading dang mo, tranh pop nham ca man hinh.
     if (!mounted || !_isLoading) return;
     _isLoading = false;
     Navigator.of(context, rootNavigator: true).pop();
