@@ -749,6 +749,10 @@ class _PrintReceivingCardPageState extends State<PrintReceivingCardPage> {
                 ),
               ),
 
+              const SizedBox(height: 8),
+
+              _combo('Reason', reason, reasons, (v) => reason = v),
+
               // thong tin receving card
               const SizedBox(height: 10),
 
@@ -790,9 +794,6 @@ class _PrintReceivingCardPageState extends State<PrintReceivingCardPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-
-              _combo('Reason', reason, reasons, (v) => reason = v),
 
               const SizedBox(height: 10),
 
