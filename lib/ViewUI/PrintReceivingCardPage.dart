@@ -63,6 +63,65 @@ class _PrintReceivingCardPageState extends State<PrintReceivingCardPage> {
   List<PrinterDevice> printerDevices = [];
   //PrinterDevice? savedPrinterDevice;
 
+
+  // Lưu Sloc gốc từ database (không bị ghi đè)
+  String _originalSloc = '';
+  /// Mapping Plant → Sloc khi Reason = IQC Lotout NGStock
+  String _getSlocLotoutNG(String plant) {
+    switch (plant.toUpperCase().trim()) {
+      case 'VR01': return '1197';
+      case 'VC01': return '2197';
+      case 'VG01': return '6197';
+      case 'VB01': return '5197';
+      case 'V501': return '8197';
+      case 'VV01': return '3197';
+      case 'VE01': return '9197';
+      case 'VY01': return '4197';
+      default:     return '';
+    }
+  }
+
+  /// Mapping theo Plant khi Reason = IQC Check Sample OKStock
+  Map<String, String> _getSlocRepLocOKStock(String plant) {
+    switch (plant.toUpperCase().trim()) {
+      case 'VR01': return {'sloc': '1610', 'reploc': '1197'};
+      case 'VC01': return {'sloc': '2610', 'reploc': '2197'};
+      case 'VG01': return {'sloc': '6610', 'reploc': '6197'};
+      case 'VB01': return {'sloc': '5610', 'reploc': '5197'};
+      case 'V501': return {'sloc': '8610', 'reploc': '8197'};
+      case 'VV01': return {'sloc': '3610', 'reploc': '3197'};
+      case 'VE01': return {'sloc': '9610', 'reploc': '9197'};
+      case 'VY01': return {'sloc': '4610', 'reploc': '4197'};
+      default:     return {'sloc': '', 'reploc': ''};
+    }
+  }
+
+  /// Cập nhật lại ô Sloc + RepLoc theo Reason hiện tại
+  void _updateSlocAndRepLoc() {
+    if (receivingCard == null) return;
+
+    final plant = receivingCard!.plant;
+
+    if (reason == 'IQC Lotout NGStock') {
+      // Sloc = map theo Plant, RepLoc = Sloc gốc từ DB
+      final mappedSloc = _getSlocLotoutNG(plant);
+      txtSloc.text = mappedSloc.isNotEmpty ? mappedSloc : _originalSloc;
+      txtRepLoc.text = _originalSloc;
+    }
+    else if (reason == 'IQC Check Sample OKStock') {
+      // Cả Sloc và RepLoc đều map theo Plant
+      final mapped = _getSlocRepLocOKStock(plant);
+      txtSloc.text = mapped['sloc']!.isNotEmpty ? mapped['sloc']! : _originalSloc;
+      txtRepLoc.text = mapped['reploc']!.isNotEmpty ? mapped['reploc']! : _originalSloc;
+    }
+    else {
+      // Reason khác → giữ nguyên Sloc gốc, RepLoc = Sloc gốc
+      txtSloc.text = _originalSloc;
+      txtRepLoc.text = _originalSloc;
+    }
+  }
+
+
   /// May in da dung gan nhat. static => van nho khi thoat trang roi vao lai.
   static PrinterDevice? _savedPrinter;
 
@@ -129,8 +188,17 @@ class _PrintReceivingCardPageState extends State<PrintReceivingCardPage> {
         tcodes = t;
         reasons = r;
         if (!t.contains(tcode)) tcode = t.isEmpty ? null : t.first;
-        if (!r.contains(reason)) reason = r.isEmpty ? null : r.first;
+
+        // ← Sửa đoạn set reason
+        if (!r.contains(reason)) {
+          if (source == ReprintSource.kittingCard && r.contains('FA return material')) {
+            reason = 'FA return material';
+          } else {
+            reason = r.isEmpty ? null : r.first;
+          }
+        }
       });
+
     } catch (e) {
       if (mounted) _showError('Không tải được danh sách Tcode / Lý do: $e');
     } finally {
@@ -151,7 +219,17 @@ class _PrintReceivingCardPageState extends State<PrintReceivingCardPage> {
         : (card.currentQuantity.isNotEmpty
         ? card.currentQuantity
         : card.totalQuantity);
-    txtSloc.text = card?.sloc ?? '';
+
+    // Lưu Sloc gốc từ DB
+    _originalSloc = card?.sloc ?? '';
+
+    // Gán Sloc + RepLoc theo quy tắc
+    if (card != null) {
+      _updateSlocAndRepLoc();
+    } else {
+      txtSloc.text = '';
+      txtRepLoc.text = '';
+    }
   }
 
   void _focusScan() {
@@ -568,6 +646,17 @@ class _PrintReceivingCardPageState extends State<PrintReceivingCardPage> {
       _fillCardInfo(null);
       txtRepLoc.clear();
 
+      // ← Thêm đoạn này
+      if (value == ReprintSource.kittingCard) {
+        if (reasons.contains('FA return material')) {
+          reason = 'FA return material';
+        }
+      }
+      else {
+        // Nếu muốn khi quay lại Receiving Card thì reset về phần tử đầu tiên
+        reason = reasons.isNotEmpty ? reasons.first : null;
+      }
+
     });
     _focusScan();
   }
@@ -751,7 +840,11 @@ class _PrintReceivingCardPageState extends State<PrintReceivingCardPage> {
 
               const SizedBox(height: 8),
 
-              _combo('Reason', reason, reasons, (v) => reason = v),
+              //_combo('Reason', reason, reasons, (v) => reason = v),
+              _combo('Reason', reason, reasons, (v) {
+                reason = v;
+                _updateSlocAndRepLoc();   // ← thêm dòng này để cập nhật ngay khi đổi Reason
+              }),
 
               // thong tin receving card
               const SizedBox(height: 10),
