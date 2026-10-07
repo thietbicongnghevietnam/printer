@@ -9,6 +9,8 @@ import '../l10n/app_lang.dart';
 import '../repositories/auth_repository.dart';
 import '../views/pages/iqc/iqc_menu_page.dart';
 
+import 'PrintReceivingCardPage.dart'; // ← sửa path nếu khác
+
 class CheckInspection extends StatefulWidget {
   const CheckInspection({super.key});
 
@@ -587,6 +589,24 @@ class _ExampleWidgetState extends State<CheckInspection> {
                   ),
                 ],
               ),
+
+              const SizedBox(height: 8),
+
+              // Nút Print RC → sang trang in lại Receiving Card
+              SizedBox(
+                width: double.infinity,
+                child: _smallButton(
+                  'Print RC',
+                      () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const PrintReceivingCardPage(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
             ],
           ),
         ),

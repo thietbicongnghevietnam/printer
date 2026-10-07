@@ -7,6 +7,8 @@ import '../di/di.dart';
 import '../l10n/app_lang.dart';
 import '../repositories/auth_repository.dart';
 
+import 'PrintReceivingCardPage.dart'; // ← sửa path nếu khác
+
 class Hang1NamInspection extends StatefulWidget {
   const Hang1NamInspection({super.key});
 
@@ -551,6 +553,24 @@ class _ExampleWidgetState extends State<Hang1NamInspection> {
                   ),
                 ],
               ),
+
+              const SizedBox(height: 8),
+
+              // Nút Print RC → sang trang in lại Receiving Card
+              SizedBox(
+                width: double.infinity,
+                child: _smallButton(
+                  'Print RC',
+                      () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const PrintReceivingCardPage(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
             ],
           ),
         ),

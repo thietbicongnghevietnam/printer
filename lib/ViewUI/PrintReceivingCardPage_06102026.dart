@@ -17,8 +17,7 @@ import '../repositories/auth_repository.dart';
 enum ReprintSource {
   // Thu tu o day = thu tu hien thi tren man hinh
   receivingCard('ReceivingCard', 'Receiving Card'),
-  kittingCard('KittingCard', 'Kitting Card'),
-  panacim('Panacim', 'Panacim');
+  kittingCard('KittingCard', 'Kitting Card');
 
   const ReprintSource(this.code, this.label);
 
@@ -58,19 +57,6 @@ class _PrintReceivingCardPageState extends State<PrintReceivingCardPage> {
 
   ReprintSource source = ReprintSource.receivingCard; // mac dinh
 
-  /// Ly do mac dinh theo nguon. Nguon khong co trong map => lay phan tu dau.
-  static const Map<ReprintSource, String> _defaultReasonBySource = {
-    ReprintSource.kittingCard: 'FA return material',
-    ReprintSource.panacim: 'Panacim SMT',
-  };
-
-  /// Ly do se duoc chon san khi doi sang nguon [s].
-  String? _defaultReasonFor(ReprintSource s) {
-    final want = _defaultReasonBySource[s];
-    if (want != null && reasons.contains(want)) return want;
-    return reasons.isEmpty ? null : reasons.first;
-  }
-
   String scannedBarcode = "";
   ReceivingCardIQC? receivingCard;
 
@@ -80,7 +66,7 @@ class _PrintReceivingCardPageState extends State<PrintReceivingCardPage> {
 
   // Lưu Sloc gốc từ database (không bị ghi đè)
   String _originalSloc = '';
-  /// Mapping Plant → Sloc khi Reason = IQC Check NGStock
+  /// Mapping Plant → Sloc khi Reason = IQC Lotout NGStock
   String _getSlocLotoutNG(String plant) {
     switch (plant.toUpperCase().trim()) {
       case 'VR01': return '1197';
@@ -104,24 +90,8 @@ class _PrintReceivingCardPageState extends State<PrintReceivingCardPage> {
       case 'VB01': return {'sloc': '5610', 'reploc': '5197'};
       case 'V501': return {'sloc': '8610', 'reploc': '8197'};
       case 'VV01': return {'sloc': '3610', 'reploc': '3197'};
-      case 'VE01': return {'sloc': '9610', 'reploc': '9S97'};  //xac nhan lai
+      case 'VE01': return {'sloc': '9610', 'reploc': '9197'};
       case 'VY01': return {'sloc': '4610', 'reploc': '4197'};
-      default:     return {'sloc': '', 'reploc': ''};
-    }
-  }
-
-  /// Mapping theo Plant khi Reason = Panacim SMT
-  /// 'sloc' rong = giu Sloc goc cua the (mac dinh nhu Kitting Card)
-  Map<String, String> _getSlocRepLocPanacimSMT(String plant) {
-    switch (plant.toUpperCase().trim()) {
-      case 'VR01': return {'sloc': '', 'reploc': '1197'};
-      case 'VC01': return {'sloc': '', 'reploc': '2197'};
-      case 'VG01': return {'sloc': '', 'reploc': '6197'};
-      case 'VB01': return {'sloc': '', 'reploc': '5197'};
-      case 'V501': return {'sloc': '', 'reploc': '8197'};
-      case 'VV01': return {'sloc': '', 'reploc': '3197'};
-      case 'VE01': return {'sloc': '', 'reploc': '9197'};
-      case 'VY01': return {'sloc': '', 'reploc': '4197'};
       default:     return {'sloc': '', 'reploc': ''};
     }
   }
@@ -132,8 +102,7 @@ class _PrintReceivingCardPageState extends State<PrintReceivingCardPage> {
 
     final plant = receivingCard!.plant;
 
-    //if (reason == 'IQC Lotout NGStock') {
-    if (reason == 'IQC Check NGStock') {
+    if (reason == 'IQC Lotout NGStock') {
       // Sloc = map theo Plant, RepLoc = Sloc gốc từ DB
       final mappedSloc = _getSlocLotoutNG(plant);
       txtSloc.text = mappedSloc.isNotEmpty ? mappedSloc : _originalSloc;
@@ -142,12 +111,6 @@ class _PrintReceivingCardPageState extends State<PrintReceivingCardPage> {
     else if (reason == 'IQC Check Sample OKStock') {
       // Cả Sloc và RepLoc đều map theo Plant
       final mapped = _getSlocRepLocOKStock(plant);
-      txtSloc.text = mapped['sloc']!.isNotEmpty ? mapped['sloc']! : _originalSloc;
-      txtRepLoc.text = mapped['reploc']!.isNotEmpty ? mapped['reploc']! : _originalSloc;
-    }
-    else if (reason == 'Panacim SMT') {
-      // Sloc: VR01 = 1610, plant khác giữ Sloc gốc. RepLoc map theo Plant
-      final mapped = _getSlocRepLocPanacimSMT(plant);
       txtSloc.text = mapped['sloc']!.isNotEmpty ? mapped['sloc']! : _originalSloc;
       txtRepLoc.text = mapped['reploc']!.isNotEmpty ? mapped['reploc']! : _originalSloc;
     }
@@ -226,8 +189,14 @@ class _PrintReceivingCardPageState extends State<PrintReceivingCardPage> {
         reasons = r;
         if (!t.contains(tcode)) tcode = t.isEmpty ? null : t.first;
 
-        // Ly do mac dinh theo nguon dang chon (Kitting Card / Panacim / ...)
-        if (!r.contains(reason)) reason = _defaultReasonFor(source);
+        // ← Sửa đoạn set reason
+        if (!r.contains(reason)) {
+          if (source == ReprintSource.kittingCard && r.contains('FA return material')) {
+            reason = 'FA return material';
+          } else {
+            reason = r.isEmpty ? null : r.first;
+          }
+        }
       });
 
     } catch (e) {
@@ -677,11 +646,17 @@ class _PrintReceivingCardPageState extends State<PrintReceivingCardPage> {
       _fillCardInfo(null);
       txtRepLoc.clear();
 
-      // Chon san ly do theo nguon:
-      //   Kitting Card -> 'FA return material'
-      //   Panacim      -> 'Panacim SMT'
-      //   con lai      -> phan tu dau tien cua danh sach
-      reason = _defaultReasonFor(value);
+      // ← Thêm đoạn này
+      if (value == ReprintSource.kittingCard) {
+        if (reasons.contains('FA return material')) {
+          reason = 'FA return material';
+        }
+      }
+      else {
+        // Nếu muốn khi quay lại Receiving Card thì reset về phần tử đầu tiên
+        reason = reasons.isNotEmpty ? reasons.first : null;
+      }
+
     });
     _focusScan();
   }
