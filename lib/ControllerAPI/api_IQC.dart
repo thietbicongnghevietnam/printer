@@ -1414,6 +1414,70 @@ Future<Map<String, dynamic>> Insert_ReceivingCard_RepLoc({
   return {};
 }
 
+//kiem tra xem da in hay chua
+Future<Map<String, dynamic>> Query_Check_ReceivingCard_Printed({
+  //required String barcode,
+  required String material,
+  required String quantity,
+  required String printDate,
+  required String typeSource,
+}) async {
+  String apiUrl = 'http://10.92.184.22:8036/Query_Check_ReceivingCard_Printed';
+
+  Map<String, String> requestData = {
+    "material": material,
+    "quantity": quantity,
+    "printDate": printDate, // yyyy-MM-dd
+    "typeSource": typeSource, // ReceivingCard / KittingCard / Panacim
+  };
+
+  String requestBody = json.encode(requestData);
+
+  final response = await http
+      .post(
+    Uri.parse(apiUrl),
+    headers: {"Content-Type": "application/json"},
+    body: requestBody,
+  )
+      .timeout(const Duration(seconds: 15));
+
+  print(
+      'Query_Check_ReceivingCard_Printed ${response.statusCode}: ${response.body}');
+
+  if (response.statusCode != 200) {
+    throw Exception(
+        'API kiểm tra in lỗi ${response.statusCode}, liên hệ IT!');
+  }
+
+  dynamic data;
+  try {
+    data = json.decode(response.body);
+  } catch (e) {
+    throw Exception('API kiểm tra in trả về không đúng định dạng JSON!');
+  }
+
+  // API trả về Ok(json) với json là string => decode thêm 1 lần
+  if (data is String) {
+    try {
+      data = json.decode(data);
+    } catch (e) {
+      throw Exception('API kiểm tra in trả về không đúng định dạng JSON!');
+    }
+  }
+
+  if (data is List) {
+    final rows = data.whereType<Map>().toList();
+    return rows.isEmpty ? {} : Map<String, dynamic>.from(rows.first);
+  }
+  if (data is Map && data['data'] is List) {
+    final rows = (data['data'] as List).whereType<Map>().toList();
+    return rows.isEmpty ? {} : Map<String, dynamic>.from(rows.first);
+  }
+  if (data is Map) return Map<String, dynamic>.from(data);
+
+  return {};
+}
+
 // show thong tin kitting card outside
 Future<List<Map<String, dynamic>>> Query_KittingCard_Outside(
     String barcode, String userId) async {
@@ -1535,6 +1599,59 @@ Future<Map<String, dynamic>> Update_SupplyKittingOutside({
   }
 
   // API tra ve 1 object don: { ... }
+  if (data is Map) return Map<String, dynamic>.from(data);
+
+  return {};
+}
+
+/// Gửi barcode scan lên server, nhận ReceiptSloc.
+/// Server trả 1 dòng/map có field ReceiptSloc (hoặc receiptsloc).
+Future<Map<String, dynamic>> Query_ReceiptSloc_ByBarcode({
+  required String barcode,
+}) async {
+  const apiUrl = 'http://10.92.184.22:8036/Query_ReceiptSloc_ByBarcode';
+
+  final requestData = <String, String>{
+    'barcode': barcode,
+  };
+
+  final response = await http
+      .post(
+    Uri.parse(apiUrl),
+    headers: {'Content-Type': 'application/json'},
+    body: json.encode(requestData),
+  )
+      .timeout(const Duration(seconds: 15));
+
+  print('Query_ReceiptSloc_ByBarcode ${response.statusCode}: ${response.body}');
+
+  if (response.statusCode != 200) {
+    throw Exception('API ReceiptSloc lỗi ${response.statusCode}, liên hệ IT!');
+  }
+
+  dynamic data;
+  try {
+    data = json.decode(response.body);
+  } catch (e) {
+    throw Exception('API ReceiptSloc trả về không đúng định dạng JSON!');
+  }
+
+  if (data is String) {
+    try {
+      data = json.decode(data);
+    } catch (e) {
+      throw Exception('API ReceiptSloc trả về không đúng định dạng JSON!');
+    }
+  }
+
+  if (data is List) {
+    final rows = data.whereType<Map>().toList();
+    return rows.isEmpty ? {} : Map<String, dynamic>.from(rows.first);
+  }
+  if (data is Map && data['data'] is List) {
+    final rows = (data['data'] as List).whereType<Map>().toList();
+    return rows.isEmpty ? {} : Map<String, dynamic>.from(rows.first);
+  }
   if (data is Map) return Map<String, dynamic>.from(data);
 
   return {};

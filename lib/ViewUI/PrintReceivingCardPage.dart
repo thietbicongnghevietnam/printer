@@ -151,6 +151,17 @@ class _PrintReceivingCardPageState extends State<PrintReceivingCardPage> {
       txtSloc.text = mapped['sloc']!.isNotEmpty ? mapped['sloc']! : _originalSloc;
       txtRepLoc.text = mapped['reploc']!.isNotEmpty ? mapped['reploc']! : _originalSloc;
     }
+    else if (reason == 'FA return material') {
+      // Lấy Sloc từ barcode quét: phần tử thứ 6 (index 5) sau dấu ;
+      // VD: ...;171;;1340;2026-10-07;VR01;... → 1340
+      //1AP2LPMWD505K1TA2;PNHR2509ZA/AS;FCT;171;;1340;2026-10-07;VR01;6:30;11A0;UploadNo;DP;DP;DIP;2681667
+      // final fromBarcode = _slocFromFaReturnBarcode(scannedBarcode);
+      // txtSloc.text = fromBarcode.isNotEmpty ? fromBarcode : _originalSloc;
+      // txtRepLoc.text = _originalSloc;
+      // Sloc lấy từ API theo barcode; RepLoc giữ Sloc gốc
+      txtRepLoc.text = _originalSloc;
+      _loadReceiptSlocFromApi(); // async
+    }
     else {
       // Reason khác → giữ nguyên Sloc gốc, RepLoc = Sloc gốc
       txtSloc.text = _originalSloc;
@@ -158,6 +169,56 @@ class _PrintReceivingCardPageState extends State<PrintReceivingCardPage> {
     }
   }
 
+  /// Gọi API lấy ReceiptSloc theo barcode đã scan → gán txtSloc.
+  Future<void> _loadReceiptSlocFromApi() async {
+    final barcode = scannedBarcode.trim().isNotEmpty
+        ? scannedBarcode.trim()
+        : txtScan.text.trim();
+
+    if (barcode.isEmpty) {
+      txtSloc.text = _originalSloc;
+      return;
+    }
+
+    try {
+      final row = await Query_ReceiptSloc_ByBarcode(barcode: barcode);
+      if (!mounted) return;
+
+      final lower = <String, String>{
+        for (final e in row.entries)
+          e.key.toLowerCase(): (e.value ?? '').toString().trim(),
+      };
+
+      // Ưu tiên ReceiptSloc; fallback vài tên cột hay gặp
+      final receiptSloc = lower['receiptsloc'] ??
+          lower['sloc'] ??
+          lower['values']?.toString() ?? // nếu SP select 1 cột không tên
+          '';
+
+      // Một số API trả 1 cột không tên → lấy value đầu
+      String value = receiptSloc;
+      if (value.isEmpty && row.isNotEmpty) {
+        value = (row.values.first ?? '').toString().trim();
+        if (value.toLowerCase() == 'null') value = '';
+      }
+
+      setState(() {
+        txtSloc.text = value.isNotEmpty ? value : _originalSloc;
+        // txtRepLoc đã gán _originalSloc ở nhánh FA return
+      });
+    } catch (e) {
+      if (!mounted) return;
+      txtSloc.text = _originalSloc;
+      _showError('Không lấy được ReceiptSloc: $e');
+    }
+  }
+
+  /// Parse Sloc từ barcode Kitting / FA return (cột index 5).
+  // String _slocFromFaReturnBarcode(String barcode) {
+  //   final parts = barcode.trim().split(';');
+  //   if (parts.length <= 5) return '';
+  //   return parts[5].trim();
+  // }
 
   /// May in da dung gan nhat. static => van nho khi thoat trang roi vao lai.
   static PrinterDevice? _savedPrinter;
@@ -559,6 +620,43 @@ class _PrintReceivingCardPageState extends State<PrintReceivingCardPage> {
     // Ghi nhan len server truoc, server OK moi in tem
     //if (!await _saveToServer() || !mounted) return;
 
+    // ----- Check đã in trong ngày chưa -----
+    try {
+      //_openLoading();
+      final check = await Query_Check_ReceivingCard_Printed(
+        //barcode: scannedBarcode,
+        material: txtMaterial.text.trim(),
+        quantity: txtQuantity.text.trim(),
+        printDate: _todayPrintDate(),
+        typeSource: source.code,
+      );
+      if (!mounted) return;
+      //_closeLoading();
+
+      final lower = <String, String>{
+        for (final e in check.entries)
+          e.key.toLowerCase(): (e.value ?? '').toString().trim(),
+      };
+      final kq = lower['kq'] ?? '';
+      final msg = lower['message'] ?? lower['msg'] ?? '';
+
+      // kq == '1' (hoặc 'true') => đã in trong ngày
+      if (kq == '1' || kq.toLowerCase() == 'true') {
+        final wantReprint = await _confirmReprint(
+          msg.isEmpty
+              ? 'Tem này đã được in trong ngày (${_todayPrintDate()}). '
+              'Bạn có muốn in lại không?'
+              : msg,
+        );
+        if (!wantReprint || !mounted) return;
+      }
+    } catch (e) {
+      //_closeLoading();
+      _showError('Không kiểm tra được trạng thái in: $e');
+      return; // hoặc bỏ return nếu muốn vẫn cho in khi API lỗi
+    }
+    // -----END Check đã in trong ngày chưa -----
+
     // Ghi nhan len server, lay barcode moi roi nap lai the moi de in
     final String? newBarcode = await _saveToServer();
     //_openLoading();
@@ -616,6 +714,41 @@ class _PrintReceivingCardPageState extends State<PrintReceivingCardPage> {
     );
   }
 
+  Future<bool> _confirmReprint(String message) async {
+    if (!mounted) return false;
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Đã in rồi'),
+        content: Text(
+          message.isEmpty
+              ? 'Tem này đã được in trong ngày. Bạn có muốn in lại không?'
+              : message,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Không'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('In lại'),
+          ),
+        ],
+      ),
+    );
+    return result == true;
+  }
+
+  String _todayPrintDate() {
+    final now = DateTime.now();
+    // yyyy-MM-dd — chỉnh format nếu server yêu cầu khác
+    return '${now.year.toString().padLeft(4, '0')}-'
+        '${now.month.toString().padLeft(2, '0')}-'
+        '${now.day.toString().padLeft(2, '0')}';
+  }
+
   /// Ket noi va in. Tra ve true neu in thanh cong.
   Future<bool> _print(PrinterDevice device, ReceivingCardIQC card,
       {bool showError = true}) async {
@@ -623,26 +756,55 @@ class _PrintReceivingCardPageState extends State<PrintReceivingCardPage> {
     final Map<String, String> values = card.toTemplateValues();
     values['txtQuantity'] = txtQuantity.text.trim(); // so luong nguoi dung sua
 
+    final bool isRT = reason == 'FA return material';
+    // Tem RT: Sample = Rohs
+    if (isRT) {
+      values['txtSample'] = values['txtRohs'] ?? '';
+    }
+
+    // // FA return material → tem RT; còn lại → tem thường
+    // final String template = (reason == 'FA return material')
+    //     ? ReceivingCardTemplate.receivingCard_RT
+    //     : ReceivingCardTemplate.receivingCard;
+    // FA return material → tem RT; còn lại → tem thường
+    final String template = isRT
+        ? ReceivingCardTemplate.receivingCard_RT
+        : ReceivingCardTemplate.receivingCard;
+
+
     final String command;
     try {
-      //command = ReceivingCardTemplate.build(card.toTemplateValues());
-      command = ReceivingCardTemplate.build(values);
+      command = ReceivingCardTemplate.build(values, template: template);
     } catch (e) {
       _showError('Lỗi template tem: $e');
       return false;
     }
 
     //_openLoading();
+    // try {
+    //   final printer = getIt<Printer>();
+    //   await printer.connect(device);
+    //   await printer.print(device, command);
+    //   if (!mounted) return false;
+    //   //_closeLoading();
+    //   setState(() => _savedPrinter = device); // nho may in cho lan in sau
+    //   return true;
+    // } catch (e) {
+    //   //_closeLoading();
+    //   if (showError) {
+    //     _showError(
+    //         'Không in được, kiểm tra máy in ${device.id} đã bật và ở gần PDA!');
+    //   }
+    //   return false;
+    // }
     try {
       final printer = getIt<Printer>();
       await printer.connect(device);
       await printer.print(device, command);
       if (!mounted) return false;
-      //_closeLoading();
-      setState(() => _savedPrinter = device); // nho may in cho lan in sau
+      setState(() => _savedPrinter = device);
       return true;
     } catch (e) {
-      //_closeLoading();
       if (showError) {
         _showError(
             'Không in được, kiểm tra máy in ${device.id} đã bật và ở gần PDA!');
@@ -941,7 +1103,9 @@ class _PrintReceivingCardPageState extends State<PrintReceivingCardPage> {
                   style: TextStyle(color: Colors.grey.shade600),
                 ),
               )
-                  : ReceivingCardLabelPreview(card: card, quantity: txtQuantity.text.trim()),
+                  : ReceivingCardLabelPreview(card: card, quantity: txtQuantity.text.trim(),title: reason == 'FA return material'
+                  ? 'RC Return'
+                  : 'Receiving Card',),
 
               const SizedBox(height: 16),
 
@@ -995,10 +1159,12 @@ class _PrintReceivingCardPageState extends State<PrintReceivingCardPage> {
 /// Ban xem truoc tem Receiving Card, bo cuc mo phong template Lien Label.
 /// Du lieu lay tu cung ham toTemplateValues() voi lenh in => noi dung khop tem.
 class ReceivingCardLabelPreview extends StatelessWidget {
-  const ReceivingCardLabelPreview({super.key, required this.card,this.quantity});   //show Qty theo o Qty duoc nhap => them bien quantity
+  const ReceivingCardLabelPreview({super.key, required this.card,this.quantity,this.title});   //show Qty theo o Qty duoc nhap => them bien quantity
 
   final ReceivingCardIQC card;
   final String? quantity; //show Qty theo o Qty duoc nhap
+  final String? title;
+
 
   @override
   Widget build(BuildContext context) {
@@ -1010,6 +1176,11 @@ class ReceivingCardLabelPreview extends StatelessWidget {
     const lbl = TextStyle(fontSize: 13, color: Colors.black87);
     const txt = TextStyle(
         fontSize: 14, color: Colors.black, fontWeight: FontWeight.bold);
+
+    // Tem RT: Sample = Rohs (khớp với lệnh in)
+    if (title == 'RC Return') {
+      val['txtSample'] = val['txtRohs'] ?? '';
+    }
 
     Widget cell(String text,
         {TextStyle style = txt, int flex = 1, bool right = true}) =>
@@ -1056,14 +1227,15 @@ class ReceivingCardLabelPreview extends StatelessWidget {
                     width: 60,
                     child: Text(x('txtTime'), style: lbl),
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Receiving Card',
+                      title ?? 'Receiving Card',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black),
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
                     ),
                   ),
                   x('txtQRCode').isEmpty
@@ -1118,10 +1290,10 @@ class ReceivingCardLabelPreview extends StatelessWidget {
                     child: Column(
                       children: [
                         row([
-                          Expanded(
+                          const Expanded(
                             child: SizedBox(
                               height: 26,
-                              child: const Center(
+                              child: Center(
                                   child: Text('IQCCheck/IQC', style: txt)),
                             ),
                           ),
